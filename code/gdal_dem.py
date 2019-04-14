@@ -3,7 +3,7 @@ import sys
 import os 
 
 #inicialize data location
-DATA_FOLDER = "./sensing_data/"
+DATA_FOLDER = "../sensing_data/"
 SRC_FOLDER = DATA_FOLDER + "dem/"
 
 DEM = SRC_FOLDER + "DEM.tiff"
@@ -18,8 +18,8 @@ def calculate_aspect(elevation):
 def main(argv):
     src_dss = [SRC_FOLDER + f for f in os.listdir(SRC_FOLDER)]
     for fname in src_dss:
-        slope=calculate_slope(fname)
-        aspect=calculate_aspect(fname)
+        calculate_slope(fname)
+        calculate_aspect(fname)
 
  
 if __name__== "__main__":

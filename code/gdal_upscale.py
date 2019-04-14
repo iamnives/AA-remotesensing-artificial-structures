@@ -5,11 +5,11 @@ import sys
 import osr
 
 #inicialize data location
-DATA_FOLDER = "./sensing_data/"
+DATA_FOLDER = "../sensing_data/"
 REF_FOLDER = DATA_FOLDER + "reference/"
 DST_FOLDER = DATA_FOLDER + "warped/"
-SRC_FOLDER = DATA_FOLDER + "datasets/"
-DEM_FOLDER = DATA_FOLDER + "dem/"
+SRC_FOLDER = DATA_FOLDER + "clipped/"
+
 # Function to read the original file's projection:
 def GetGeoInfo(FileName):
     src_ds = gdal.Open(FileName, gdal.GA_ReadOnly)
@@ -27,7 +27,7 @@ def GetGeoInfo(FileName):
 
     dataType = src_ds.GetRasterBand(1).DataType
     dataType = gdal.GetDataTypeName(dataType)
-    return nDV, xsize, ysize, geoT, projection, dataType
+    return nDV, xsize, ysize, geoT, projection, dataType 
 
 def warpRasters(src, nDV, xRes, yRes, projection, dataType, totalFiles):
     for idx, fName in enumerate(src, start=1):
@@ -38,11 +38,11 @@ def warpRasters(src, nDV, xRes, yRes, projection, dataType, totalFiles):
         print(str(idx) + "/" + str(totalFiles) + " warping " + fName + "...")
         src_ds = gdal.Open(fName, gdal.GA_ReadOnly)
 
-        temp_ds = gdal.Warp(
+        gdal.Warp(
             DST_FOLDER + "warped_" + projection + "_" + str(xRes) + "x" + str(yRes) + "_" +  name, 
             src_ds, 
             dstSRS='EPSG:' + projection,
-            outputType=dataType, xRes=xRes, yRes=yRes)
+            xRes=xRes, yRes=yRes)
 
 
 def main(argv):
@@ -50,13 +50,11 @@ def main(argv):
     ref_dss = [REF_FOLDER + f for f in os.listdir(REF_FOLDER)]
     # Warping files
     src_dss = [SRC_FOLDER + f for f in os.listdir(SRC_FOLDER)]
-    dem = [DEM_FOLDER + f for f in os.listdir(DEM_FOLDER)]
-    src_dss = src_dss + dem
 
     # Get reference info
     nDV, xsize, ysize, geoT, projection, _ = GetGeoInfo(ref_dss[0])
     toWrapN = len(src_dss)
-    print("Wraping " + str(toWrapN) + " files...")
+    print("Warping " + str(toWrapN) + " files...")
 
     #Warp everything!
     warpRasters(

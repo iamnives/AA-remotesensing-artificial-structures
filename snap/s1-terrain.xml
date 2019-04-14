@@ -5,6 +5,7 @@
     <sources/>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\S1A_IW_GRDH_1SDV_20151215T063453_20151215T063518_009049_00CFCE_90AA.zip</file>
+      <formatName>SENTINEL-1</formatName>
     </parameters>
   </node>
   <node id="Apply-Orbit-File">
@@ -18,32 +19,13 @@
       <continueOnFail>false</continueOnFail>
     </parameters>
   </node>
-  <node id="Calibration">
-    <operator>Calibration</operator>
+  <node id="Terrain-Correction">
+    <operator>Terrain-Correction</operator>
     <sources>
       <sourceProduct refid="Apply-Orbit-File"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <sourceBands/>
-      <auxFile>Product Auxiliary File</auxFile>
-      <externalAuxFile/>
-      <outputImageInComplex>false</outputImageInComplex>
-      <outputImageScaleInDb>false</outputImageScaleInDb>
-      <createGammaBand>false</createGammaBand>
-      <createBetaBand>false</createBetaBand>
-      <selectedPolarisations>VH,VV</selectedPolarisations>
-      <outputSigmaBand>true</outputSigmaBand>
-      <outputGammaBand>true</outputGammaBand>
-      <outputBetaBand>true</outputBetaBand>
-    </parameters>
-  </node>
-  <node id="Terrain-Correction">
-    <operator>Terrain-Correction</operator>
-    <sources>
-      <sourceProduct refid="Calibration"/>
-    </sources>
-    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <sourceBands>Sigma0_VH,Gamma0_VH,Beta0_VH,Sigma0_VV,Gamma0_VV,Beta0_VV</sourceBands>
+      <sourceBands>Amplitude_VH,Intensity_VH,Amplitude_VV,Intensity_VV</sourceBands>
       <demName>SRTM 3Sec</demName>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
@@ -67,13 +49,13 @@
       <saveLatLon>false</saveLatLon>
       <saveIncidenceAngleFromEllipsoid>false</saveIncidenceAngleFromEllipsoid>
       <saveLocalIncidenceAngle>false</saveLocalIncidenceAngle>
-      <saveProjectedLocalIncidenceAngle>false</saveProjectedLocalIncidenceAngle>
-      <saveSelectedSourceBand>true</saveSelectedSourceBand>
+      <saveProjectedLocalIncidenceAngle>true</saveProjectedLocalIncidenceAngle>
+      <saveSelectedSourceBand>false</saveSelectedSourceBand>
       <outputComplex>false</outputComplex>
       <applyRadiometricNormalization>true</applyRadiometricNormalization>
-      <saveSigmaNought>false</saveSigmaNought>
-      <saveGammaNought>false</saveGammaNought>
-      <saveBetaNought>false</saveBetaNought>
+      <saveSigmaNought>true</saveSigmaNought>
+      <saveGammaNought>true</saveGammaNought>
+      <saveBetaNought>true</saveBetaNought>
       <incidenceAngleForSigma0>Use projected local incidence angle from DEM</incidenceAngleForSigma0>
       <incidenceAngleForGamma0>Use projected local incidence angle from DEM</incidenceAngleForGamma0>
       <auxFile>Latest Auxiliary File</auxFile>
@@ -86,26 +68,23 @@
       <sourceProduct refid="Terrain-Correction"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\S1A_IW_GRDH_1SDV_20151215T063453_20151215T063518_009049_00CFCE_90AA_Orb_Cal_TC.dim</file>
+      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\S1A_IW_GRDH_1SDV_20151215T063453_20151215T063518_009049_00CFCE_90AA_Orb_TC.dim</file>
       <formatName>BEAM-DIMAP</formatName>
     </parameters>
   </node>
   <applicationData id="Presentation">
     <Description/>
     <node id="Read">
-            <displayPosition x="27.0" y="148.0"/>
+            <displayPosition x="37.0" y="134.0"/>
     </node>
     <node id="Apply-Orbit-File">
-      <displayPosition x="126.0" y="136.0"/>
-    </node>
-    <node id="Calibration">
-      <displayPosition x="240.0" y="160.0"/>
+      <displayPosition x="83.0" y="191.0"/>
     </node>
     <node id="Terrain-Correction">
-      <displayPosition x="353.0" y="149.0"/>
+      <displayPosition x="261.0" y="221.0"/>
     </node>
     <node id="Write">
-            <displayPosition x="503.0" y="150.0"/>
+            <displayPosition x="455.0" y="135.0"/>
     </node>
   </applicationData>
 </graph>
