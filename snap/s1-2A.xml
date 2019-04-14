@@ -1,0 +1,70 @@
+<graph id="Graph">
+  <version>1.0</version>
+  <node id="Read">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\S1A_IW_GRDH_1SDV_20151215T063453_20151215T063518_009049_00CFCE_90AA_Orb_Cal_TC.dim</file>
+    </parameters>
+  </node>
+  <node id="Sen2Cor">
+    <operator>Sen2Cor</operator>
+    <sources>
+      <sourceProduct refid="Read"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <targetProductFile/>
+      <postExecuteTemplate>Sen2Cor-post-template.vm</postExecuteTemplate>
+      <sceneOnly/>
+      <resolution>ALL</resolution>
+      <crOnly>false</crOnly>
+      <<html><body>L2A__GIPP_.0020file_.003cbr_.003e_.0028If_.0020a_.0020file_.0020is_.0020selected_.002c_.003cbr_.003ethe_.0020parameters_.0020below_.003cbr_.003ewill_.0020not_.0020be_.0020used_.0029_.003c_.002fbody_.003e_.003c_.002fhtml_.003e/>
+      <gip25L2A>Sen2Cor-gipp-template.xsl</gip25L2A>
+      <gipL2A>Sen2Cor-gipp-template.xsl</gipL2A>
+      <nbProcesses>1</nbProcesses>
+      <medianFilter>0</medianFilter>
+      <aerosol>RURAL</aerosol>
+      <midLat>SUMMER</midLat>
+      <ozone>h - 331</ozone>
+      <wvCorrection>1</wvCorrection>
+      <visUpdateMode>1</visUpdateMode>
+      <wvWatermask>1</wvWatermask>
+      <cirrusCorrection>FALSE</cirrusCorrection>
+      <brdfCorrection>0</brdfCorrection>
+      <brdfLower>0.22</brdfLower>
+      <visibility>23.0</visibility>
+      <altitude>0.1</altitude>
+      <wvThresCirrus>0.25</wvThresCirrus>
+      <demDirectory>NONE</demDirectory>
+      <demReference>http://data_public:GDdci@data.cgiar-csi.org/srtm/tiles/GeoTIFF/</demReference>
+      <demUnit>0</demUnit>
+      <adjacencyRange>1.0</adjacencyRange>
+      <smoothWVMap>100.0</smoothWVMap>
+      <generateDEMoutput>FALSE</generateDEMoutput>
+      <generateTCIoutput>TRUE</generateTCIoutput>
+      <generateDDVoutput>FALSE</generateDDVoutput>
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="Sen2Cor"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\target.dim</file>
+      <formatName>BEAM-DIMAP</formatName>
+    </parameters>
+  </node>
+  <applicationData id="Presentation">
+    <Description/>
+    <node id="Read">
+            <displayPosition x="37.0" y="134.0"/>
+    </node>
+    <node id="Sen2Cor">
+      <displayPosition x="247.0" y="164.0"/>
+    </node>
+    <node id="Write">
+            <displayPosition x="455.0" y="135.0"/>
+    </node>
+  </applicationData>
+</graph>
