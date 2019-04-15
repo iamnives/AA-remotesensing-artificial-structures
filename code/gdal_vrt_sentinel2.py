@@ -30,7 +30,7 @@ bands =	{
 def main(argv):
     # Reference files
     for f in os.listdir(SRC_FOLDER):
-       bands[f.split("_")[2]].append(SRC_FOLDER + f)
+       bands[f.split("_")[3]].append(SRC_FOLDER + f)
 
     vrt_options = gdal.BuildVRTOptions(resolution='lowest')
     for b in bands:
