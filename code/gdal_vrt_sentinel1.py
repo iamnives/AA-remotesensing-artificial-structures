@@ -7,8 +7,8 @@ import osr
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-SRC_FOLDER = DATA_FOLDER + "datasets/s1"
-dS1_FNAME = "s1b-iw-grd-"
+SRC_FOLDER = DATA_FOLDER + "datasets/s1/"
+S1_FNAME = "s1b-iw-grd-"
 
 def main(argv):
     # Bands to process and merge (add intensity, gamma, beta, etc.. on main PC)

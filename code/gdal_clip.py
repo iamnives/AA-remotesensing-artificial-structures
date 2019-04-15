@@ -6,8 +6,8 @@ import osr
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-SRC_S1 = DATA_FOLDER + "datasets/s1"
-SRC_S2 = DATA_FOLDER + "datasets/s2"
+SRC_S1 = DATA_FOLDER + "datasets/s1/"
+SRC_S2 = DATA_FOLDER + "datasets/s2/"
 SRC_DEM = DATA_FOLDER + "dem/"
 SRC_INDEXES = DATA_FOLDER + "indexes/"
 
@@ -30,8 +30,8 @@ def main(argv):
 		gt = src_ds.GetGeoTransform()
 		xRes = gt[1]
 		Yres =-gt[5]
-		outFile = f.split(".")[2]
-		cut_command = f"gdalwarp -of GTiff -tr {xRes} {Yres} -tap -cutline {MASK} -crop_to_cutline {f} {DST_FOLDER + 'clipped_' + outFile + '.tif'}"
+		outFile = f.split("/")[-1]
+		cut_command = f"gdalwarp -t_srs EPSG:32629 -r near -of GTiff -tr 10 10 -tap -cutline {MASK} -crop_to_cutline {f} {DST_FOLDER + 'clipped_' + outFile}"
 		os.system(cut_command)
 	
 
