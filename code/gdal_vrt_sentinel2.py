@@ -1,4 +1,3 @@
-
 import gdal
 import numpy
 import os
@@ -7,7 +6,7 @@ import osr
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-SRC_FOLDER = DATA_FOLDER + "datasets/"
+SRC_FOLDER = DATA_FOLDER + "datasets/s2/"
 
 bands =	{
   "AOT":[],
@@ -31,11 +30,12 @@ bands =	{
 def main(argv):
     # Reference files
     for f in os.listdir(SRC_FOLDER):
-       bands[f.split("_")[3]].append(SRC_FOLDER + f)
+       bands[f.split("_")[2]].append(SRC_FOLDER + f)
 
     vrt_options = gdal.BuildVRTOptions(resolution='lowest')
     for b in bands:
-        gdal.BuildVRT(SRC_FOLDER + 'sentinel2_' + b + '.vrt', bands[b], options=vrt_options)
+        if(len(bands[b])> 0):
+          gdal.BuildVRT(SRC_FOLDER + 'sentinel2_' + b + '.vrt', bands[b], options=vrt_options)
     
 if __name__== "__main__":
   main(sys.argv)

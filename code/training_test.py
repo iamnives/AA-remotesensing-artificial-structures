@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from osgeo import gdal
+import gdal
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from PIL import Image
@@ -10,26 +10,10 @@ import matplotlib
 import matplotlib.pyplot as plt 
 plt.switch_backend('Qt4Agg') 
 
-def rasterizeVector(path_to_vector,cols,rows,geo_transform,projection):
-    lblRaster=np.zeros((rows, cols))
-    for i, path in enumerate(path_to_vector):
-        label = i+1
-        # open the input datasource and read content
-        inputDS = gdal.OpenEx(path, gdal.OF_VECTOR)
-        shpLayer = inputDS.GetLayer(0)
-        # Create the destination data source
-        driver = gdal.GetDriverByName('MEM') 
-        rasterDS = driver.Create('', cols, rows, 1, gdal.GDT_UInt16)
-        # Define spatial reference
-        rasterDS.SetGeoTransform(geo_transform)
-        rasterDS.SetProjection(projection)
-        # Rasterize
-        gdal.RasterizeLayer(rasterDS, [1], shpLayer, burn_values=[label])
-        # Get a raster band
-        rBand = rasterDS.GetRasterBand(1)
-        lblRaster += rBand.ReadAsArray()
-        rasterDS = None
-    return lblRaster
+#inicialize data location
+DATA_FOLDER = "../sensing_data/"
+DS_FOLDER = DATA_FOLDER + "warped/"
+LB_FOLDER = DATA_FOLDER + "labels/"
 
 def createGeotiff(outRaster, data, geo_transform, projection):
     # Create a GeoTIFF file with the given data
@@ -42,36 +26,33 @@ def createGeotiff(outRaster, data, geo_transform, projection):
     band.WriteArray(data)
     dataset = None
 
-img = Image.open('test7.png')
-img.save('test7.tiff','tiff')
+outRaster = DATA_FOLDER + "results/classification.tiff"
 
-inpRaster = "test7.tiff"
-outRaster = "randomForest.tiff"
-trainData = "/home/madhuka/Desktop/FYP/Automated-Land-Use-Mapping-master/SatelliteClassification/train"
-
-# Open raster dataset
-rasterDS = gdal.Open(inpRaster, gdal.GA_ReadOnly)
-# Get spatial reference
-geo_transform = rasterDS.GetGeoTransform()
-projection = rasterDS.GetProjectionRef()
-
-# Extract band's data and transform into a numpy array
 bandsData = []
-for b in range(1, rasterDS.RasterCount+1):
-    band = rasterDS.GetRasterBand(b)
+geo_transform = None
+projection = None
+for raster in DS_FOLDER:
+    # Open raster dataset
+    rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
+    # Get spatial reference
+    geo_transform = rasterDS.GetGeoTransform()
+    projection = rasterDS.GetProjectionRef()
+
+    # Extract band's data and transform into a numpy array
+    band = rasterDS.GetRasterBand(1)
     bandsData.append(band.ReadAsArray())
+    
 bandsData = np.dstack(bandsData)
 rows, cols, noBands = bandsData.shape
 
 # Read vector data, and rasterize all the vectors in the given directory into a single labelled raster
-files = [f for f in os.listdir(trainData) if f.endswith('.shp')]
-classes = [f.split('.')[0] for f in files]
-shapefiles = [os.path.join(trainData, f) for f in files if f.endswith('.shp')]
-lblRaster = rasterizeVector(shapefiles, rows, cols, geo_transform, projection)
+rasterDS = gdal.Open(LB_FOLDER + "cos.tif")
+rBand = rasterDS.GetRasterBand(1)
+lblRaster = rBand.ReadAsArray()
 
 # Prepare training data (set of pixels used for training) and labels
 isTrain = np.nonzero(lblRaster)
-trainingLabels = lblRaster [isTrain]
+trainingLabels = lblRaster[isTrain]
 trainingData = bandsData[isTrain]
 
 # Train a Random Forest classifier
