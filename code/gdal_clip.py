@@ -13,7 +13,7 @@ SRC_INDEXES = DATA_FOLDER + "indexes/"
 
 LABELS = DATA_FOLDER + "labels/cos.tif"
 DST_FOLDER = DATA_FOLDER + "clipped/"
-MASK = DATA_FOLDER + "ROI_test.shp"
+MASK = "../vector_data/ROI.shp"
 
 def main(argv):
 	src_dss = [SRC_S1 + f for f in os.listdir(SRC_S1) if ".vrt" in f]
@@ -25,11 +25,6 @@ def main(argv):
 
 	for f in src_dss:
 		src_ds = gdal.Open(f, gdal.GA_ReadOnly)
-   
-		# Get reference pixel size
-		gt = src_ds.GetGeoTransform()
-		xRes = gt[1]
-		Yres =-gt[5]
 		outFile = f.split("/")[-1]
 		cut_command = f"gdalwarp -t_srs EPSG:32629 -r near -of GTiff -tr 10 10 -tap -cutline {MASK} -crop_to_cutline {f} {DST_FOLDER + 'clipped_' + outFile}"
 		os.system(cut_command)
