@@ -15,9 +15,9 @@ LB_FOLDER = DATA_FOLDER + "labels/"
 
 outRaster = DATA_FOLDER + "results/classification.tiff"
 
-bandsData = []
+trainingData = []
 
-src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ".vrt" in f]
+src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
 
 labelDS = gdal.Open(DS_FOLDER + "clipped_cos.tif", gdal.GA_ReadOnly)
 
@@ -27,25 +27,22 @@ labelBands = labelDS.GetRasterBand(1).ReadAsArray()
 isTrain = np.nonzero(labelBands)
 trainingLabels = labelBands[isTrain]
 
-print("Labels: " + str(trainingLabels.shape))
-# Get list of raster bands info as array, already indexed by labels non zero
+print("Labels array shape, should be (n,): " + str(trainingLabels.shape))
 
+# Get list of raster bands info as array, already indexed by labels non zero
+test_ds = None
 for idx, raster in enumerate(src_dss):
     # Open raster dataset
     print("Opening raster: " + raster)
     rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
-
     # Extract band's data and transform into a numpy array
-    band = rasterDS.GetRasterBand(1)
-    bandsData.append(band.ReadAsArray()[isTrain])
+    test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
+    trainingData.append(test_ds[isTrain])
     
 print("Done!")
-measures= np.vstack(tuple(bandsData))
-bandsData=None
-trainingData = measures.T
-print(trainingData.shape)
 
-print(measures)
-print(measures.shape)
+trainingData = np.dstack(tuple(trainingData))[0]
+print(trainingData[0])
+
 imgplot = plt.imshow(labelBands)
 plt.show()
