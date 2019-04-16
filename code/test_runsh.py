@@ -54,5 +54,7 @@ print(np.count_nonzero(bandsData[0]==-32767))
 #probs wrong
 measures= np.vstack(tuple(bandsData))
 
+print(measures)
+print(measures.shape)
 imgplot = plt.imshow(labelBands)
 plt.show()
