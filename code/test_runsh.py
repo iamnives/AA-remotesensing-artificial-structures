@@ -42,7 +42,7 @@ for idx, raster in enumerate(src_dss):
 print("Done!")
 
 trainingData = np.dstack(tuple(trainingData))[0]
-print(trainingData[0])
+print(trainingData.shape)
 
 imgplot = plt.imshow(labelBands)
 plt.show()
