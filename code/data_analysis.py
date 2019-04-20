@@ -35,7 +35,6 @@ labelBands = labelDS.GetRasterBand(1).ReadAsArray()
 isTrain = np.nonzero(labelBands)
 y = labelBands[isTrain]
 
-print("Labels array shape, should be (n,): " + str(y.shape))
 
 # Get list of raster bands info as array, already indexed by labels non zero
 test_ds = None
@@ -47,21 +46,50 @@ for idx, raster in enumerate(src_dss):
     test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
     X.append(test_ds[isTrain])
     
-print("Done!") 
+print("Done!")
 
+print("Normalizing data N(0,1)!")
+# subtract means form the input data
+X -= np.mean(X, axis=1)[:,None]
+# normalize the data
+X /= np.sqrt(np.sum(X*X, axis=1))[:,None]
+print("Done!")
+
+print("Labels array shape, should be (n,): " + str(y.shape))
 X = np.dstack(tuple(X))[0]
-print(X.shape)
+print("Training array shape, should be (n,k): " + str(X.shape))
+
+N_COMPUTING = 100000
+n_samples = X.shape[0]
+
+n_samples_per = N_COMPUTING/n_samples
 
 # Split the dataset in two equal parts
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3)
+_, X_train, _, y_train = train_test_split(
+    X, y, test_size=n_samples_per)
+
+_, X_test, _, y_test = train_test_split(
+    X, y, test_size=n_samples_per/2)
+
+# Shuffle the data
+indices = np.arange(X_train.shape[0])
+np.random.shuffle(indices)
+
+X_train = X_train[indices]
+y_train = y_train[indices]
+
+indices = np.arange(X_test.shape[0])
+np.random.shuffle(indices)
+
+X_test = X_test[indices]
+y_test = y_test[indices]
 
 print("Train: " + str(X_train.shape), "Test: " + str(X_test.shape))
 
 # Set the parameters by cross-validation
 tuning_params = [{'n_estimators': [1, 2, 4]}]
 
-scores = ['f1_micro', 'accuracy', 'precision', 'roc_auc', 'recall']
+scores = ['f1_micro', 'accuracy', 'precision_micro', 'recall_micro']
 
 print("# Tuning hyper-parameters for %s" % scores)
 print()
