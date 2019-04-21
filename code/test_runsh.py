@@ -59,9 +59,9 @@ X_train, X_test, y_train, y_test = train_test_split(
 print("Train: " + str(X_train.shape), "Test: " + str(X_test.shape))
 
 # Set the parameters by cross-validation
-tuning_params = [{'n_estimators': [1, 2, 4]}]
+tuning_params = [ {'n_estimators': [10], "n_jobs": [-1]} ]
 
-scores = ['f1_micro', 'accuracy', 'precision', 'roc_auc', 'recall']
+scores = ['f1_micro', 'accuracy', 'precision_micro', 'recall_micro']
 
 print("# Tuning hyper-parameters for %s" % scores)
 print()
