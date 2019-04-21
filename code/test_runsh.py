@@ -1,21 +1,21 @@
-import numpy as np
 import os
+import sys
+
 import gdal
+
 import numpy as np
+import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt 
-from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.model_selection import train_test_split
-import sys
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
-
 from sklearn.metrics import classification_report
-import pandas as pd
+
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
 DS_FOLDER = DATA_FOLDER + "clipped/"
@@ -52,9 +52,30 @@ print("Done!")
 X = np.dstack(tuple(X))[0]
 print(X.shape)
 
+N_COMPUTING = 100000
+n_samples = X.shape[0]
+
+n_samples_per = N_COMPUTING/n_samples
+
 # Split the dataset in two equal parts
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3)
+_, X_train, _, y_train = train_test_split(
+    X, y, test_size=n_samples_per)
+
+_, X_test, _, y_test = train_test_split(
+    X, y, test_size=n_samples_per/2)
+
+# Shuffle the data
+indices = np.arange(X_train.shape[0])
+np.random.shuffle(indices)
+
+X_train = X_train[indices]
+y_train = y_train[indices]
+
+indices = np.arange(X_test.shape[0])
+np.random.shuffle(indices)
+
+X_test = X_test[indices]
+y_test = y_test[indices]
 
 print("Train: " + str(X_train.shape), "Test: " + str(X_test.shape))
 
