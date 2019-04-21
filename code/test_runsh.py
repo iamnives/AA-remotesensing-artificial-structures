@@ -64,6 +64,9 @@ _, X_train, _, y_train = train_test_split(
 _, X_test, _, y_test = train_test_split(
     X, y, test_size=n_samples_per/2)
 
+del X
+del y
+
 # Shuffle the data
 indices = np.arange(X_train.shape[0])
 np.random.shuffle(indices)
