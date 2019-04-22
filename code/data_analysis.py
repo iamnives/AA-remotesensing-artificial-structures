@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-
+from scipy import stats
+from sklearn.model_selection import StratifiedShuffleSplit
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
 DS_FOLDER = DATA_FOLDER + "clipped/"
@@ -43,48 +44,8 @@ for idx, raster in enumerate(src_dss):
     
 print("Done!")
 
-print("Normalizing data N(0,1)!")
-# subtract means form the input data
-X -= np.mean(X, axis=1)[:,None]
-# normalize the data
-X /= np.sqrt(np.sum(X*X, axis=1))[:,None]
-print("Done!")
-
 X = np.dstack(tuple(X))[0]
 
-N_COMPUTING = 100000
-n_samples = X.shape[0]
-
-n_samples_per = N_COMPUTING/n_samples
-
-# Split the dataset in two equal parts
-_, X_train, _, y_train = train_test_split(
-    X, y, test_size=n_samples_per)
-
-_, X_test, _, y_test = train_test_split(
-    X, y, test_size=n_samples_per/2)
-
-del X
-del y
-
-# Shuffle the data
-indices = np.arange(X_train.shape[0])
-np.random.shuffle(indices)
-
-X_train = X_train[indices]
-y_train = y_train[indices]
-
-indices = np.arange(X_test.shape[0])
-np.random.shuffle(indices)
-
-X_test = X_test[indices]
-y_test = y_test[indices]
-
-print("Labels array shape, should be (n,): " + str(y_train.shape))
-print("Training array shape, should be (n,k): " + str(X_train.shape))
-
-fig7, ax7 = plt.subplots()
-ax7.set_title('Multiple Samples with Different sizes')
-ax7.hist(y_test)
-
+plt.hist(y, bins=np.arange(y.min(), y.max()+4), align='left')
+plt.xticks(np.arange(y.min(), y.max()+4))
 plt.show()
