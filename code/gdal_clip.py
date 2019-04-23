@@ -11,7 +11,7 @@ SRC_S2 = DATA_FOLDER + "datasets/s2/"
 SRC_DEM = DATA_FOLDER + "dem/"
 SRC_INDEXES = DATA_FOLDER + "indexes/"
 
-LABELS = DATA_FOLDER + "labels/cos.tif"
+LABELS = DATA_FOLDER + "labels/cos_50982.tif"
 DST_FOLDER = DATA_FOLDER + "clipped/"
 MASK = "../vector_data/ROI.shp"
 

@@ -34,7 +34,7 @@ X = []
 
 src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
 
-labelDS = gdal.Open(DS_FOLDER + "clipped_cos.tif", gdal.GA_ReadOnly)
+labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
 
 # Extract band's data and transform into a numpy array
 labelBands = labelDS.GetRasterBand(1).ReadAsArray()

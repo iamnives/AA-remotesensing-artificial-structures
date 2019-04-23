@@ -22,7 +22,7 @@ X = []
 
 src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
 
-labelDS = gdal.Open(DS_FOLDER + "clipped_cos.tif", gdal.GA_ReadOnly)
+labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
 
 # Extract band's data and transform into a numpy array
 labelBands = labelDS.GetRasterBand(1).ReadAsArray()
@@ -31,20 +31,20 @@ isTrain = np.nonzero(labelBands)
 y = labelBands[isTrain]
 
 
-# Get list of raster bands info as array, already indexed by labels non zero
-test_ds = None
-for idx, raster in enumerate(src_dss):
-    if("cos.tif" not in raster):
-        # Open raster dataset
-        print("Opening raster: " + raster)
-        rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
-        # Extract band's data and transform into a numpy array
-        test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
-        X.append(test_ds[isTrain])
+# # Get list of raster bands info as array, already indexed by labels non zero
+# test_ds = None
+# for idx, raster in enumerate(src_dss):
+#     if("cos_50982.tif" not in raster):
+#         # Open raster dataset
+#         print("Opening raster: " + raster)
+#         rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
+#         # Extract band's data and transform into a numpy array
+#         test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
+#         X.append(test_ds[isTrain])
     
-print("Done!")
+# print("Done!")
 
-X = np.dstack(tuple(X))[0]
+# X = np.dstack(tuple(X))[0]
 
 plt.hist(y, bins=np.arange(y.min(), y.max()+4), align='left')
 plt.xticks(np.arange(y.min(), y.max()+4))
