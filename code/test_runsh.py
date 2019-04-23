@@ -106,7 +106,7 @@ clf = GridSearchCV(RandomForestClassifier(), tuning_params, cv=5,
                     scoring=scores, refit='precision_weighted' ,verbose=1)
 clf.fit(X_train, y_train)
 
-print("Best parameters set found on development set: f1_micro")
+print("Best parameters set found on development set: precision_weighted")
 print()
 print(clf.best_params_)
 print()
