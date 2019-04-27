@@ -103,7 +103,7 @@ def main(argv):
     print(classification_report(y_test, y_pred))
 
     viz.plot_confusionmx(matrix)
-    viz.plot_gridcv(gs.cv_results_, scores, "n_estimators", 6)
+    viz.plot_gridcv(gs.cv_results_, scores, "n_estimators", 500)
 
 if __name__== "__main__":
   main(sys.argv)
