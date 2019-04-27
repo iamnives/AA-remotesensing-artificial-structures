@@ -11,7 +11,9 @@ import seaborn as sn
 
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier
+
+from sklearn import svm
+
 from sklearn.model_selection import cross_val_score
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
@@ -69,15 +71,18 @@ def main(argv):
     X_test = preprocessing.normalize(X_test)
     X_train = preprocessing.normalize(X_train)
     # Set the parameters by cross-validation
-    N_s = [1,5,10,20,100, 150, 200, 500, 1000, 1200, 2000]
-    tuning_params = [ {'n_estimators': N_s, "n_jobs": [-1]} ]
+
+    C_s = [0.01, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 100, 300]
+    gamma = [0.1, 0.5, 1, 2, 5, 10, 25, 50]
+    
+    tuning_params = [ {'C': C_s, 'gamma':'auto'} ]
 
     scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
 
     print("# Tuning hyper-parameters for %s" % scores)
     print()
 
-    gs = GridSearchCV(RandomForestClassifier(), tuning_params, cv=5,
+    gs = GridSearchCV(svm.SVC(), tuning_params, cv=5,
                         scoring=scores, refit='precision_weighted', return_train_score=True)
     gs.fit(X_train, y_train)
 
@@ -104,7 +109,7 @@ def main(argv):
     print(classification_report(y_test, y_pred))
 
     viz.plot_confusionmx(matrix)
-    viz.plot_gridcv(gs.cv_results_, scores, "n_estimators",  N_s[0], N_s[-1])
+    viz.plot_gridcv(gs.cv_results_, scores, "C", C_s[0], C_s[-1])
 
 if __name__== "__main__":
   main(sys.argv)

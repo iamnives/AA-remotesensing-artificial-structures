@@ -9,6 +9,9 @@ DS_FOLDER = DATA_FOLDER + "clipped/"
 LB_FOLDER = DATA_FOLDER + "labels/"
 OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
 
+def _class_map(x):
+        return x
+
 def load():
     X = []
 
@@ -38,4 +41,4 @@ def load():
     print("Done!") 
 
     X = np.dstack(tuple(X))[0]
-    return X, y
+    return X, _class_map(y)

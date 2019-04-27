@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sn
 
 #PARAM: results = clf.cv_results_ , scorng = metric objects
-def plot_gridcv(results, scoring, param, lim):
+def plot_gridcv(results, scoring, param, limL, limH):
     plt.figure(figsize=(13, 13))
     plt.title("GridSearchCV evaluation",
             fontsize=16)
@@ -14,7 +14,7 @@ def plot_gridcv(results, scoring, param, lim):
     plt.ylabel("Score")
 
     ax = plt.gca()
-    ax.set_xlim(0, lim)
+    ax.set_xlim(limL, limH)
     ax.set_ylim(0.5, 1)
 
     # Get the regular numpy array from the MaskedArray

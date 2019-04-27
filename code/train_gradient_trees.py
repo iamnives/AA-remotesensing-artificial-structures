@@ -11,7 +11,9 @@ import seaborn as sn
 
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier
+
+import xgboost as xgb
+
 from sklearn.model_selection import cross_val_score
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
@@ -68,16 +70,37 @@ def main(argv):
 
     X_test = preprocessing.normalize(X_test)
     X_train = preprocessing.normalize(X_train)
-    # Set the parameters by cross-validation
-    N_s = [1,5,10,20,100, 150, 200, 500, 1000, 1200, 2000]
-    tuning_params = [ {'n_estimators': N_s, "n_jobs": [-1]} ]
 
     scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
 
     print("# Tuning hyper-parameters for %s" % scores)
     print()
 
-    gs = GridSearchCV(RandomForestClassifier(), tuning_params, cv=5,
+    xgb_model = xgb.XGBClassifier()
+    #brute force scan for all parameters, here are the tricks
+    #usually max_depth is 6,7,8
+    #learning rate is around 0.05, but small changes may make big diff
+    #tuning min_child_weight subsample colsample_bytree can have 
+    #much fun of fighting against overfit 
+    #n_estimators is how many round of boosting
+    #finally, ensemble xgboost with multiple seeds may reduce variance
+    n_trees = [1,5,10,20,100, 150, 200, 500, 1000, 1200, 2000]
+    parameters = {'nthread':[4], #when use hyperthread, xgboost may become slower
+              'tree_method': ['gpu_hist'],
+              'gpu_id': [0],
+              'max_bin': [16],
+              'objective':['multi:softmax'],
+              #params tuning
+              'learning_rate': [0.05], #so called `eta` value
+              'max_depth': [6],
+              'min_child_weight': [11],
+              'verbosity': [1],
+              'subsample': [0.8],
+              'colsample_bytree': [0.7],
+              'n_estimators': n_trees , #number of trees, change it to 1000 for better results
+              'missing':[-999],}
+
+    gs = GridSearchCV(xgb_model, parameters, cv=5, n_jobs=5, 
                         scoring=scores, refit='precision_weighted', return_train_score=True)
     gs.fit(X_train, y_train)
 
@@ -104,7 +127,7 @@ def main(argv):
     print(classification_report(y_test, y_pred))
 
     viz.plot_confusionmx(matrix)
-    viz.plot_gridcv(gs.cv_results_, scores, "n_estimators",  N_s[0], N_s[-1])
+    viz.plot_gridcv(gs.cv_results_, scores, "n_estimators",  n_trees[0], n_trees[-1])
 
 if __name__== "__main__":
   main(sys.argv)
