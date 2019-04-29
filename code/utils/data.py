@@ -12,6 +12,28 @@ DS_FOLDER = DATA_FOLDER + "clipped/"
 LB_FOLDER = DATA_FOLDER + "labels/"
 OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
 
+
+
+# Class to text for plotting features
+def feature_map(u):
+    text_classes = {
+        1: "Edificação artificial permanente",
+        2: "Vias ferreas e estradas",
+        3: "Vegetação",
+        4: "Águas",
+    }
+    return np.array([text_classes[x] for x in u])
+
+# Class to text for plotting and analysis, only works if map_classes = True
+def reverse_class_map(u):
+    text_classes = {
+        1: "Edificação artificial permanente",
+        2: "Vias ferreas e estradas",
+        3: "Vegetação",
+        4: "Águas",
+    }
+    return np.array([text_classes[x] for x in u])
+
 def _class_map(x):
     if x == 4: return 2
     if x >= 1 and x <= 13:
@@ -22,7 +44,14 @@ def _class_map(x):
             return 4
     return -1
 
-def load(train_size):
+def _class_map_binary(x):
+    if x >= 1 and x <= 13:
+        return 1
+    else:
+        return 2
+    return -1
+
+def load(train_size, normalize=False, map_classes=True, binary=False):
     X = []
 
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
@@ -50,10 +79,11 @@ def load(train_size):
         
     print("Done!") 
 
+    # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
 
+    # Variables to calculate n train percentace from number of wanted samples
     n_samples = X.shape[0]
-
     n_samples_per = train_size/n_samples
 
     # Split the dataset in two equal parts
@@ -63,6 +93,7 @@ def load(train_size):
     _, X_test, _, y_test = train_test_split(
         X, y, test_size=n_samples_per/2)
 
+    # Memory savings
     del X
     del y
 
@@ -79,11 +110,20 @@ def load(train_size):
     X_test = X_test[indices]
     y_test = y_test[indices]
 
-
+    # Prevents overflow on algoritms computations
     X_train = X_train.astype(np.float64)
     X_test = X_test.astype(np.float64)
 
-    X_test = preprocessing.normalize(X_test)
-    X_train = preprocessing.normalize(X_train)
+    maping_f = _class_map
+    if binary:
+        maping_f = _class_map_binary
 
-    return X_train, np.array([_class_map(y) for y in y_train]) , X_test ,  np.array([_class_map(y) for y in y_test])
+    if normalize:
+        X_test = preprocessing.normalize(X_test)
+        X_train = preprocessing.normalize(X_train)
+
+    if map_classes:
+        y_train = np.array([maping_f(y) for y in y_train])
+        y_test = np.array([maping_f(y) for y in y_test])
+
+    return X_train, y_train , X_test , y_test

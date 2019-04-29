@@ -14,7 +14,14 @@ sample_size = 100_000
 X, y, X_test , y_test = data.load(sample_size) 
 
 # Build a forest and compute the feature importances
-forest = RandomForestClassifier(n_estimators=500, n_jobs=4)
+forest = RandomForestClassifier(n_estimators=500,
+                            min_samples_leaf=1, 
+                            min_samples_split=3, 
+                            max_features=2,
+                            max_depth=80,
+                            bootstrap=True,
+                            n_jobs=4
+                            )
 
 forest.fit(X, y)
 importances = forest.feature_importances_

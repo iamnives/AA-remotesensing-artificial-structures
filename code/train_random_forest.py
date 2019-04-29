@@ -33,7 +33,8 @@ def main(argv):
     #                   'n_estimators': N_s,
     #                   'n_jobs': [4]
     #               } ]
-    # Set the parameters by cross-validation
+
+    # Set the parameters by cross-validation, best params before feature selection TODO dont mess till FS ends
     N_s = [500]
     min_samples_leaf = [1]
     min_samples_split = [3]
@@ -69,6 +70,8 @@ def main(argv):
     recall = recall_score(y_test, y_pred, average='weighted')
     f1 =  f1_score(y_test, y_pred, average='weighted')
     kappa = cohen_kappa_score(y_test, y_pred)
+    
+    # TODO accuracy same as recall, non binary classification issue
     accuracy = accuracy_score(y_test, y_pred)
     matrix = confusion_matrix(y_test, y_pred)
 
