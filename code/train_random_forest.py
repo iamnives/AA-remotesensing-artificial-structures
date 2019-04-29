@@ -1,19 +1,7 @@
 import os
 import sys
 
-import gdal
-
-import numpy as np
-import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt 
-import seaborn as sn
-
-from sklearn.model_selection import train_test_split
-from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
@@ -23,61 +11,49 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import cohen_kappa_score
-from sklearn.metrics import confusion_matrix
-
-from sklearn import preprocessing
 
 from utils import visualization as viz
 from utils import data
 
-
 def main(argv):
-    X, y = data.load()
 
-    N_COMPUTING = 100000
-    n_samples = X.shape[0]
+    train_size = 100_000
+    X_train, y_train, X_test , y_test = data.load(train_size) 
 
-    n_samples_per = N_COMPUTING/n_samples
+    # N_s = [10,20,100, 150, 200, 300, 1000]
+    # min_samples_leaf = [1, 3, 4, 5]
+    # min_samples_split = [2, 8, 10, 12]
 
-    # Split the dataset in two equal parts
-    _, X_train, _, y_train = train_test_split(
-        X, y, test_size=n_samples_per)
-
-    _, X_test, _, y_test = train_test_split(
-        X, y, test_size=n_samples_per/2)
-
-    del X
-    del y
-
-    # Shuffle the data
-    indices = np.arange(X_train.shape[0])
-    np.random.shuffle(indices)
-
-    X_train = X_train[indices]
-    y_train = y_train[indices]
-
-    indices = np.arange(X_test.shape[0])
-    np.random.shuffle(indices)
-
-    X_test = X_test[indices]
-    y_test = y_test[indices]
-
-
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
-
-    X_test = preprocessing.normalize(X_test)
-    X_train = preprocessing.normalize(X_train)
+    # tuning_params = [ {
+    #                   'bootstrap': [True],
+    #                   'max_depth': [80, 90, 100, 110, None],
+    #                   'max_features': [2, 3, 'auto'],
+    #                   'min_samples_leaf': min_samples_leaf,
+    #                   'min_samples_split': min_samples_split,
+    #                   'n_estimators': N_s,
+    #                   'n_jobs': [4]
+    #               } ]
     # Set the parameters by cross-validation
-    N_s = [1,5,10,20,100, 150, 200, 500, 1000, 1200, 2000]
-    tuning_params = [ {'n_estimators': N_s, "n_jobs": [-1]} ]
+    N_s = [500]
+    min_samples_leaf = [1]
+    min_samples_split = [3]
+
+    tuning_params = [ {
+                      'bootstrap': [True],
+                      'max_depth': [80],
+                      'max_features': [2],
+                      'min_samples_leaf': min_samples_leaf,
+                      'min_samples_split': min_samples_split,
+                      'n_estimators': N_s,
+                      'n_jobs': [4]
+                  } ]
 
     scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
 
-    print("# Tuning hyper-parameters for %s" % scores)
+    print(f'# Tuning hyper-parameters for {scores} on { X_train.shape[0] } samples')
     print()
 
-    gs = GridSearchCV(RandomForestClassifier(), tuning_params, cv=5,
+    gs = GridSearchCV(RandomForestClassifier(), tuning_params, cv=3,
                         scoring=scores, refit='precision_weighted', return_train_score=True)
     gs.fit(X_train, y_train)
 
@@ -105,6 +81,7 @@ def main(argv):
 
     viz.plot_confusionmx(matrix)
     viz.plot_gridcv(gs.cv_results_, scores, "n_estimators",  N_s[0], N_s[-1])
+    viz.plot_gridcv(gs.cv_results_, scores, "min_samples_split",  min_samples_leaf[0], min_samples_leaf[-1])
 
 if __name__== "__main__":
   main(sys.argv)

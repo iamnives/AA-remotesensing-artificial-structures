@@ -1,21 +1,7 @@
 import os
 import sys
 
-import gdal
-
-import numpy as np
-import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt 
-import seaborn as sn
-
-from sklearn.model_selection import train_test_split
-from sklearn import metrics
-
 from sklearn import svm
-
-from sklearn.model_selection import cross_val_score
-from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
@@ -25,51 +11,14 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import cohen_kappa_score
-from sklearn.metrics import confusion_matrix
-
-from sklearn import preprocessing
 
 from utils import visualization as viz
 from utils import data
 
-
 def main(argv):
-    X, y = data.load()
 
-    N_COMPUTING = 100000
-    n_samples = X.shape[0]
-
-    n_samples_per = N_COMPUTING/n_samples
-
-    # Split the dataset in two equal parts
-    _, X_train, _, y_train = train_test_split(
-        X, y, test_size=n_samples_per)
-
-    _, X_test, _, y_test = train_test_split(
-        X, y, test_size=n_samples_per/2)
-
-    del X
-    del y
-
-    # Shuffle the data
-    indices = np.arange(X_train.shape[0])
-    np.random.shuffle(indices)
-
-    X_train = X_train[indices]
-    y_train = y_train[indices]
-
-    indices = np.arange(X_test.shape[0])
-    np.random.shuffle(indices)
-
-    X_test = X_test[indices]
-    y_test = y_test[indices]
-
-
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
-
-    X_test = preprocessing.normalize(X_test)
-    X_train = preprocessing.normalize(X_train)
+    train_size = 100_000
+    X_train, y_train, X_test , y_test = data.load(train_size)
     # Set the parameters by cross-validation
 
     C_s = [0.01, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 100, 300]

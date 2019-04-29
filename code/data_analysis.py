@@ -11,25 +11,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from scipy import stats
 from sklearn.model_selection import StratifiedShuffleSplit
-#inicialize data location
-DATA_FOLDER = "../sensing_data/"
-DS_FOLDER = DATA_FOLDER + "clipped/"
-LB_FOLDER = DATA_FOLDER + "labels/"
 
-outRaster = DATA_FOLDER + "results/classification.tiff"
+from utils import data
 
-X = []
-
-src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
-
-labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-
-# Extract band's data and transform into a numpy array
-labelBands = labelDS.GetRasterBand(1).ReadAsArray()
-# Prepare training data (set of pixels used for training) and labels
-isTrain = np.nonzero(labelBands)
-y = labelBands[isTrain]
-
+train_size = 5_000_000
+X, y, _ , _ = data.load(train_size) 
 
 # # Get list of raster bands info as array, already indexed by labels non zero
 # test_ds = None
@@ -46,6 +32,7 @@ y = labelBands[isTrain]
 
 # X = np.dstack(tuple(X))[0]
 
-plt.hist(y, bins=np.arange(y.min(), y.max()+4), align='left')
-plt.xticks(np.arange(y.min(), y.max()+4))
+plt.hist(y, bins=np.arange(y.min(), y.max()+1), align='left', color='c')
+plt.xticks(np.arange(y.min(), y.max()+1))
+
 plt.show()

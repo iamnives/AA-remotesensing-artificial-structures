@@ -15,12 +15,12 @@ def plot_gridcv(results, scoring, param, limL, limH):
 
     ax = plt.gca()
     ax.set_xlim(limL, limH)
-    ax.set_ylim(0.5, 1)
+    ax.set_ylim(0.7, 1)
 
     # Get the regular numpy array from the MaskedArray
     X_axis = np.array(results['param_' + param].data, dtype=float)
 
-    for scorer, color in zip(sorted(scoring), ['g', 'k']):
+    for scorer, color in zip(sorted(scoring), ['g', 'k', 'b', 'c', 'y', 'r', 'm']):
         for sample, style in (('train', '--'), ('test', '-')):
             sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
             sample_score_std = results['std_%s_%s' % (sample, scorer)]
