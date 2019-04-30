@@ -10,7 +10,7 @@ from utils import data
 from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier
 
-sample_size = 100_000
+sample_size = 500_000
 X, y, X_test , y_test = data.load(sample_size) 
 
 # Build a forest and compute the feature importances

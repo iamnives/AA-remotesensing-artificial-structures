@@ -5,6 +5,8 @@ import gdal
 import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
+from imblearn.combine import SMOTETomek
+from imblearn.under_sampling import RandomUnderSampler
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -12,16 +14,11 @@ DS_FOLDER = DATA_FOLDER + "clipped/"
 LB_FOLDER = DATA_FOLDER + "labels/"
 OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
 
-
-
 # Class to text for plotting features
 def feature_map(u):
-    text_classes = {
-        1: "Edificação artificial permanente",
-        2: "Vias ferreas e estradas",
-        3: "Vegetação",
-        4: "Águas",
-    }
+    src_dss = [f.split("clipped")[1].split('.')[0][1:] for f in os.listdir(DS_FOLDER) if "cos" not in f]
+   
+    text_classes = dict(zip(range(len(src_dss)), src_dss))
     return np.array([text_classes[x] for x in u])
 
 # Class to text for plotting and analysis, only works if map_classes = True
@@ -51,7 +48,7 @@ def _class_map_binary(x):
         return 2
     return -1
 
-def load(train_size, normalize=False, map_classes=True, binary=False):
+def load(train_size, normalize=True, map_classes=True, binary=False, balance=False):
     X = []
 
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
@@ -65,7 +62,6 @@ def load(train_size, normalize=False, map_classes=True, binary=False):
     y = labelBands[isTrain]
 
     print("Labels array shape, should be (n,): " + str(y.shape))
-
     # Get list of raster bands info as array, already indexed by labels non zero
     test_ds = None
     for _, raster in enumerate(src_dss):
@@ -77,21 +73,16 @@ def load(train_size, normalize=False, map_classes=True, binary=False):
             test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
             X.append(test_ds[isTrain])
         
-    print("Done!") 
+    
 
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
-
-    # Variables to calculate n train percentace from number of wanted samples
-    n_samples = X.shape[0]
-    n_samples_per = train_size/n_samples
-
+    print("Done!") 
+    print("Features array shape, should be (n,k): " + str(X.shape))
+    
     # Split the dataset in two equal parts
-    _, X_train, _, y_train = train_test_split(
-        X, y, test_size=n_samples_per)
-
-    _, X_test, _, y_test = train_test_split(
-        X, y, test_size=n_samples_per/2)
+    X_train, X_test, y_test, y_train = train_test_split(
+        X, y, test_size=train_size, train_size=train_size)
 
     # Memory savings
     del X
@@ -125,5 +116,9 @@ def load(train_size, normalize=False, map_classes=True, binary=False):
     if map_classes:
         y_train = np.array([maping_f(y) for y in y_train])
         y_test = np.array([maping_f(y) for y in y_test])
+    
+    if balance:
+        smt = RandomUnderSampler(sampling_strategy='auto')
+        X_train, y_train = smt.fit_sample(X_train, y_train)
 
     return X_train, y_train , X_test , y_test

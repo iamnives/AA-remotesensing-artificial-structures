@@ -33,7 +33,7 @@ def main(argv):
     #much fun of fighting against overfit 
     #n_estimators is how many round of boosting
     #finally, ensemble xgboost with multiple seeds may reduce variance
-    n_trees = [1,5,10,20,100, 150, 200, 500, 1000, 1200, 2000]
+    n_trees = [200]
     parameters = {'nthread':[4], #when use hyperthread, xgboost may become slower
               'tree_method': ['gpu_hist'],
               'gpu_id': [0],

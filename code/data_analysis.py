@@ -14,25 +14,10 @@ from sklearn.model_selection import StratifiedShuffleSplit
 
 from utils import data
 
-train_size = 5_000_000
-X, y, _ , _ = data.load(train_size) 
+train_size = 7_000_000
+X, y, _ , _ = data.load(train_size, balance=True) 
 
-# # Get list of raster bands info as array, already indexed by labels non zero
-# test_ds = None
-# for idx, raster in enumerate(src_dss):
-#     if("cos_50982.tif" not in raster):
-#         # Open raster dataset
-#         print("Opening raster: " + raster)
-#         rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
-#         # Extract band's data and transform into a numpy array
-#         test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
-#         X.append(test_ds[isTrain])
-    
-# print("Done!")
-
-# X = np.dstack(tuple(X))[0]
-
-plt.hist(y, bins=np.arange(y.min(), y.max()+1), align='left', color='c')
-plt.xticks(np.arange(y.min(), y.max()+1))
+plt.hist(y, bins=np.arange(y.min(), y.max()+2), align='left', color='c')
+plt.xticks(np.arange(y.min(), y.max()+2))
 
 plt.show()

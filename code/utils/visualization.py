@@ -7,10 +7,10 @@ import seaborn as sn
 #PARAM: results = clf.cv_results_ , scorng = metric objects
 def plot_gridcv(results, scoring, param, limL, limH):
     plt.figure(figsize=(13, 13))
-    plt.title("GridSearchCV evaluation",
+    plt.title("GridSearchCV evaluation " + param,
             fontsize=16)
 
-    plt.xlabel("n_trees")
+    plt.xlabel(param)
     plt.ylabel("Score")
 
     ax = plt.gca()
