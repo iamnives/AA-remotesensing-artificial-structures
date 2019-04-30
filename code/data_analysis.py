@@ -14,8 +14,8 @@ from sklearn.model_selection import StratifiedShuffleSplit
 
 from utils import data
 
-train_size = 7_000_000
-X, y, _ , _ = data.load(train_size, balance=True) 
+train_size = 1_000_000
+X, y, _ , _ = data.load(train_size, balance=False) 
 
 plt.hist(y, bins=np.arange(y.min(), y.max()+2), align='left', color='c')
 plt.xticks(np.arange(y.min(), y.max()+2))

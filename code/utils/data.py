@@ -32,7 +32,7 @@ def reverse_class_map(u):
     return np.array([text_classes[x] for x in u])
 
 def _class_map(x):
-    if x == 4: return 2
+    # if x == 4: return 2 not enough datas
     if x >= 1 and x <= 13:
         return 1
     elif x > 13 and x <= 42:
@@ -80,32 +80,37 @@ def load(train_size, normalize=True, map_classes=True, binary=False, balance=Fal
     print("Done!") 
     print("Features array shape, should be (n,k): " + str(X.shape))
     
+    if balance:
+        smt = RandomUnderSampler(sampling_strategy='auto', random_state=42)
+        X, y = smt.fit_sample(X, y)
+
     # Split the dataset in two equal parts
     X_train, X_test, y_test, y_train = train_test_split(
-        X, y, test_size=train_size, train_size=train_size)
+        X, y, test_size=train_size*0.2, train_size=train_size, random_state=42)
 
     # Memory savings
     del X
     del y
 
     # Shuffle the data
-    indices = np.arange(X_train.shape[0])
-    np.random.shuffle(indices)
+    # indices = np.arange(X_train.shape[0])
+    # np.random.shuffle(indices)
 
-    X_train = X_train[indices]
-    y_train = y_train[indices]
+    # X_train = X_train[indices]
+    # y_train = y_train[indices]
 
-    indices = np.arange(X_test.shape[0])
-    np.random.shuffle(indices)
+    # indices = np.arange(X_test.shape[0])
+    # np.random.shuffle(indices)
 
-    X_test = X_test[indices]
-    y_test = y_test[indices]
+    # X_test = X_test[indices]
+    # y_test = y_test[indices]
 
     # Prevents overflow on algoritms computations
     X_train = X_train.astype(np.float64)
     X_test = X_test.astype(np.float64)
 
     maping_f = _class_map
+    
     if binary:
         maping_f = _class_map_binary
 
@@ -117,8 +122,4 @@ def load(train_size, normalize=True, map_classes=True, binary=False, balance=Fal
         y_train = np.array([maping_f(y) for y in y_train])
         y_test = np.array([maping_f(y) for y in y_test])
     
-    if balance:
-        smt = RandomUnderSampler(sampling_strategy='auto')
-        X_train, y_train = smt.fit_sample(X_train, y_train)
-
     return X_train, y_train , X_test , y_test

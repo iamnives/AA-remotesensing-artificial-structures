@@ -17,29 +17,18 @@ from utils import data
 
 def main(argv):
 
-    train_size = 7_000_000
-    X_train, y_train, X_test , y_test = data.load(train_size, balance=True) 
+    train_size = 100_000
+    X_train, y_train, X_test , y_test = data.load(train_size) 
 
-    # N_s = [1, 5, 10,20,100, 150, 200, 300, 500]
-    # min_samples_leaf = [1, 3, 4, 5]
-    # min_samples_split = [2, 8, 10, 12]
-
-    # tuning_params = [ {
-    #                   'bootstrap': [True],
-    #                   'max_depth': [80, 90, 100, 110, None],
-    #                   'max_features': [2, 3, 'auto'],
-    #                   'min_samples_leaf': min_samples_leaf,
-    #                   'min_samples_split': min_samples_split,
-    #                   'n_estimators': N_s,
-    #                   'n_jobs': [4]
-    #               } ]
-
-    # Set the parameters by cross-validation, best params before feature selection TODO dont mess till FS ends
-    N_s = [100]
-    min_samples_leaf = [1]
-    min_samples_split = [2]
+    N_s = [1,10,20,150, 300, 500]
+    min_samples_leaf = [1, 3, 4]
+    min_samples_split = [2, 8, 10]
 
     tuning_params = [ {
+                      'max_depth': [100, 110, None],
+                      'max_features': [2, 3, 'auto'],
+                      'min_samples_leaf': min_samples_leaf,
+                      'min_samples_split': min_samples_split,
                       'n_estimators': N_s,
                       'n_jobs': [-1]
                   } ]

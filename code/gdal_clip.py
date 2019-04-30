@@ -13,7 +13,7 @@ SRC_INDEXES = DATA_FOLDER + "indexes/"
 
 LABELS = DATA_FOLDER + "labels/cos_50982.tif"
 DST_FOLDER = DATA_FOLDER + "clipped/"
-MASK = "../vector_data/ROI.shp"
+MASK = "../vector_data/ROI_test.shp"
 
 def main(argv):
 	src_dss = [SRC_S1 + f for f in os.listdir(SRC_S1) if ".vrt" in f]
