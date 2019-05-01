@@ -21,11 +21,11 @@ def main(argv):
     X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True) 
 
     N_s = [1,10,20,150, 300, 500]
-    min_samples_leaf = [1]
-    min_samples_split = [2]
+    min_samples_leaf = [1,2,4]
+    min_samples_split = [2,3,8]
 
     tuning_params = [ {
-                      'max_depth': [None],
+                      'max_depth': [75,80,110,None],
                       'max_features': ['auto'],
                       'min_samples_leaf': min_samples_leaf,
                       'min_samples_split': min_samples_split,
