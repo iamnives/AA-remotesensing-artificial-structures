@@ -17,8 +17,8 @@ from utils import data
 
 def main(argv):
 
-    train_size = 100_000
-    X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True)
+    train_size = 10_000
+    X_train, y_train, X_test , y_test = data.load(train_size, datafiles=argv[1], normalize=True, balance=True)
     # Set the parameters by cross-validation
 
     C_s = [0.01, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 100, 300]

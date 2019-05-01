@@ -48,10 +48,16 @@ def _class_map_binary(x):
         return 2
     return -1
 
-def load(train_size, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2):
+def get_features():
+    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos_50982.tif"  not in f) and ("xml" not in f) ]
+    return np.array(src_dss)
+
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2):
     X = []
 
-    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
+    if(datafiles is None):
+        src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
+    else: src_dss = datafiles
 
     labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
 
@@ -65,7 +71,7 @@ def load(train_size, normalize=True, map_classes=True, binary=False, balance=Fal
     # Get list of raster bands info as array, already indexed by labels non zero
     test_ds = None
     for _, raster in enumerate(src_dss):
-        if("cos_50982.tif" not in raster):
+        if(("cos_50982.tif"  not in raster) and ("xml" not in raster)):
             # Open raster dataset
             print("Opening raster: " + raster)
             rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)

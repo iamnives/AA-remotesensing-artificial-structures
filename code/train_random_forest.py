@@ -18,7 +18,7 @@ from utils import data
 def main(argv):
 
     train_size = 100_000
-    X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True) 
+    X_train, y_train, X_test , y_test = data.load(train_size, datafiles=argv[1] ,normalize=True, balance=True) 
 
     N_s = [1,10,20,150, 300, 500]
     min_samples_leaf = [1,2,4]
@@ -42,7 +42,7 @@ def main(argv):
                         scoring=scores, refit='precision_micro', return_train_score=True)
     gs.fit(X_train, y_train)
 
-    print("Best parameters set found on development set: precision_micro")
+    print("Best parameters set found on development set: f1_micro")
     print()
     print(gs.best_params_)
     print()

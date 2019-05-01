@@ -18,7 +18,7 @@ from utils import data
 def main(argv):
 
     train_size = 100_000
-    X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True)
+    X_train, y_train, X_test , y_test = data.load(train_size, datafiles=argv[1], normalize=True, balance=True)
 
     scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
 
