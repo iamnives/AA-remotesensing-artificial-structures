@@ -35,7 +35,7 @@ def _class_map(x):
     if x == 4: return 2
     if x >= 1 and x <= 13:
         return 1
-    elif x > 13 and x <= 42:
+    elif x > 13 and x <= 42: 
         return 3
     elif x > 42 and x <= 48:
             return 4
