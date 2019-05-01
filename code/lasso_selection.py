@@ -9,10 +9,11 @@ from sklearn.feature_selection import SelectFromModel
 from utils import data
 from sklearn.model_selection import GridSearchCV
 
-sample_size = 500_000
-X, y, _ , _s = data.load(sample_size, balance=True) 
+sample_size = 100_000
+X, y, _ , _s = data.load(sample_size, normalize=False, balance=True) 
 
-clf = LassoCV(cv=10)
+alphas = np.geomspace(0.01,1)
+clf = LassoCV(alphas=alphas, cv=10)
 clf.fit(X, y)
 
 print(f'CV alpha: { clf.alpha_ }')

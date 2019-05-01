@@ -18,13 +18,13 @@ from utils import data
 def main(argv):
 
     train_size = 100_000
-    X_train, y_train, X_test , y_test = data.load(train_size)
+    X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True)
     # Set the parameters by cross-validation
 
     C_s = [0.01, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 100, 300]
     gamma = [0.1, 0.5, 1, 2, 5, 10, 25, 50]
     
-    tuning_params = [ {'C': C_s, 'gamma':'auto'} ]
+    tuning_params = [ {'C': C_s, 'gamma':['auto']} ]
 
     scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
 
@@ -43,17 +43,10 @@ def main(argv):
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
 
-    precision = precision_score(y_test, y_pred, average='weighted')
-    recall = recall_score(y_test, y_pred, average='weighted')
-    f1 =  f1_score(y_test, y_pred, average='weighted')
+    
     kappa = cohen_kappa_score(y_test, y_pred)
-    accuracy = accuracy_score(y_test, y_pred)
     matrix = confusion_matrix(y_test, y_pred)
 
-    print(f'Precision: {precision}')
-    print(f'Recall: {recall}')
-    print(f'Accuracy: {accuracy}')
-    print(f'F1: {f1}')
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
 

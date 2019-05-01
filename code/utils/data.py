@@ -32,7 +32,7 @@ def reverse_class_map(u):
     return np.array([text_classes[x] for x in u])
 
 def _class_map(x):
-    # if x == 4: return 2 not enough datas
+    if x == 4: return 2
     if x >= 1 and x <= 13:
         return 1
     elif x > 13 and x <= 42:
@@ -48,7 +48,7 @@ def _class_map_binary(x):
         return 2
     return -1
 
-def load(train_size, normalize=True, map_classes=True, binary=False, balance=False):
+def load(train_size, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2):
     X = []
 
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
@@ -73,53 +73,45 @@ def load(train_size, normalize=True, map_classes=True, binary=False, balance=Fal
             test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
             X.append(test_ds[isTrain])
         
-    
 
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
     print("Done!") 
     print("Features array shape, should be (n,k): " + str(X.shape))
-    
-    if balance:
-        smt = RandomUnderSampler(sampling_strategy='auto', random_state=42)
-        X, y = smt.fit_sample(X, y)
+
+    X = X.astype(np.float64)
+
+    maping_f = _class_map
+    if binary:
+        maping_f = _class_map_binary
+
+    if map_classes:
+        y = np.array([maping_f(yi) for yi in y])
 
     # Split the dataset in two equal parts
-    X_train, X_test, y_test, y_train = train_test_split(
-        X, y, test_size=train_size*0.2, train_size=train_size, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=(int(train_size*test_size)))
 
     # Memory savings
     del X
     del y
 
-    # Shuffle the data
-    # indices = np.arange(X_train.shape[0])
-    # np.random.shuffle(indices)
-
-    # X_train = X_train[indices]
-    # y_train = y_train[indices]
-
-    # indices = np.arange(X_test.shape[0])
-    # np.random.shuffle(indices)
-
-    # X_test = X_test[indices]
-    # y_test = y_test[indices]
-
     # Prevents overflow on algoritms computations
     X_train = X_train.astype(np.float64)
     X_test = X_test.astype(np.float64)
 
-    maping_f = _class_map
-    
-    if binary:
-        maping_f = _class_map_binary
-
     if normalize:
-        X_test = preprocessing.normalize(X_test)
-        X_train = preprocessing.normalize(X_train)
+        normalizer = preprocessing.Normalizer().fit(X_train)
+        X_train = normalizer.transform(X_train) 
+        X_test = normalizer.transform(X_test)
 
-    if map_classes:
-        y_train = np.array([maping_f(y) for y in y_train])
-        y_test = np.array([maping_f(y) for y in y_test])
-    
+    if balance:
+        smt = RandomUnderSampler(sampling_strategy='auto')
+        X_train, y_train = smt.fit_sample(X_train, y_train)
+        print("Features array shape after balance: " + str(X_train.shape)) 
+
+     # Split the dataset in two equal parts
+    X_train, _, y_train , _ = train_test_split(
+        X_train, y_train, train_size=min(X_train.shape[0], train_size) )
+
     return X_train, y_train , X_test , y_test

@@ -10,17 +10,17 @@ from utils import data
 from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier
 
-sample_size = 500_000
-X, y, X_test , y_test = data.load(sample_size) 
+train_size = 100_000
+X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=True) 
 
 # Build a forest and compute the feature importances
 forest = RandomForestClassifier(n_estimators=500,
                             min_samples_leaf=1, 
-                            min_samples_split=3, 
-                            max_features=2,
-                            max_depth=80,
+                            min_samples_split=2, 
+                            max_features='auto',
+                            max_depth=None,
                             bootstrap=True,
-                            n_jobs=4
+                            n_jobs=-1
                             )
 
 forest.fit(X, y)
@@ -43,6 +43,6 @@ plt.figure()
 plt.title("Feature importances")
 plt.bar(range(X.shape[1]), importances[indices],
        color="c", yerr=std[indices], align="center")
-plt.xticks(range(X.shape[1]), indices)
+plt.xticks(range(X.shape[1]), data.feature_map(indices), rotation='45', horizontalalignment="right")
 plt.xlim([-1, X.shape[1]])
 plt.show()

@@ -17,8 +17,8 @@ from utils import data
 
 def main(argv):
 
-    train_size = 250_000
-    X_train, y_train, X_test , y_test = data.load(train_size)
+    train_size = 100_000
+    X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True)
 
     scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
 
@@ -33,7 +33,7 @@ def main(argv):
     #much fun of fighting against overfit 
     #n_estimators is how many round of boosting
     #finally, ensemble xgboost with multiple seeds may reduce variance
-    n_trees = [200]
+    n_trees = [1,10,20,150, 300, 500]
     parameters = {'nthread':[4], #when use hyperthread, xgboost may become slower
               'tree_method': ['gpu_hist'],
               'gpu_id': [0],

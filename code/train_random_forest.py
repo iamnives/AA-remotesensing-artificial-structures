@@ -18,31 +18,31 @@ from utils import data
 def main(argv):
 
     train_size = 100_000
-    X_train, y_train, X_test , y_test = data.load(train_size) 
+    X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True) 
 
     N_s = [1,10,20,150, 300, 500]
-    min_samples_leaf = [1, 3, 4]
-    min_samples_split = [2, 8, 10]
+    min_samples_leaf = [1]
+    min_samples_split = [2]
 
     tuning_params = [ {
-                      'max_depth': [100, 110, None],
-                      'max_features': [2, 3, 'auto'],
+                      'max_depth': [None],
+                      'max_features': ['auto'],
                       'min_samples_leaf': min_samples_leaf,
                       'min_samples_split': min_samples_split,
                       'n_estimators': N_s,
                       'n_jobs': [-1]
                   } ]
 
-    scores = ['f1_weighted', 'precision_weighted', 'accuracy', 'recall_weighted']
+    scores = ['f1_micro', 'precision_micro', 'accuracy', 'recall_micro']
 
     print(f'# Tuning hyper-parameters for {scores} on { X_train.shape[0] } samples')
     print()
 
     gs = GridSearchCV(RandomForestClassifier(), tuning_params, cv=5,
-                        scoring=scores, refit='precision_weighted', return_train_score=True)
+                        scoring=scores, refit='precision_micro', return_train_score=True)
     gs.fit(X_train, y_train)
 
-    print("Best parameters set found on development set: precision_weighted")
+    print("Best parameters set found on development set: precision_micro")
     print()
     print(gs.best_params_)
     print()
