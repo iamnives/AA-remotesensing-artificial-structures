@@ -16,7 +16,7 @@ OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
 
 # Class to text for plotting features
 def feature_map(u):
-    src_dss = [f.split("clipped")[1].split('.')[0][1:] for f in os.listdir(DS_FOLDER) if "cos" not in f]
+    src_dss = [f.split("clipped")[1].split('.')[0][1:] for f in os.listdir(DS_FOLDER) if ("cos" not in f) and ("xml" not in f) ]
    
     text_classes = dict(zip(range(len(src_dss)), src_dss))
     return np.array([text_classes[x] for x in u])
@@ -106,6 +106,9 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     X_train = X_train.astype(np.float64)
     X_test = X_test.astype(np.float64)
 
+    X_train[np.isnan(X_train)]=-1
+    X_test[np.isnan(X_test)]=-1
+    
     if normalize:
         normalizer = preprocessing.Normalizer().fit(X_train)
         X_train = normalizer.transform(X_train) 

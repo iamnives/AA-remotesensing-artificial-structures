@@ -3,6 +3,8 @@ import sys
 
 import xgboost as xgb
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+
 from sklearn.metrics import classification_report
 
 from sklearn.metrics import precision_score
@@ -18,12 +20,8 @@ from utils import data
 def main(argv):
 
     train_size = 100_000
-    X_train, y_train, X_test , y_test = data.load(train_size, datafiles=argv[1], normalize=True, balance=True)
+    X_train, y_train, X_test , y_test = data.load(train_size, normalize=False, balance=True)
 
-    scores = ['f1_weighted', 'accuracy', 'precision_weighted', 'recall_weighted']
-
-    print("# Tuning hyper-parameters for %s" % scores)
-    print()
 
     xgb_model = xgb.XGBClassifier()
     #brute force scan for all parameters, here are the tricks
@@ -33,27 +31,25 @@ def main(argv):
     #much fun of fighting against overfit 
     #n_estimators is how many round of boosting
     #finally, ensemble xgboost with multiple seeds may reduce variance
-    n_trees = [1,10,20,150, 300, 500]
-    parameters = {'nthread':[4], #when use hyperthread, xgboost may become slower
+    n_trees =  [500,1000, 1500, 2000]
+    parameters = {'nthread':[4],
               'tree_method': ['gpu_hist'],
+              'predictor':['gpu_predictor'],
               'gpu_id': [0],
-              'max_bin': [16],
               'objective':['multi:softmax'],
               #params tuning
-              'learning_rate': [0.05], #so called `eta` value
-              'max_depth': [6],
-              'min_child_weight': [11],
-              'verbosity': [1],
-              'subsample': [0.8],
-              'colsample_bytree': [0.7],
-              'n_estimators': n_trees , #number of trees, change it to 1000 for better results
-              'missing':[-999],}
+              'learning_rate': [0.05, 0.10, 0.15, 0.20, 0.25, 0.30 ], #`eta` value
+              'max_depth':[ 3, 4, 5, 6, 8, 10, 12, 15],
+              'min_child_weight': [ 1, 3, 5, 7 ],
+              "gamma": [ 0.0, 0.1, 0.2 , 0.3, 0.4 ],
+              'colsample_bytree': [ 0.3, 0.4, 0.5 , 0.7 ],
+              'n_estimators': n_trees,
+              'verbose': [1] }
 
-    gs = GridSearchCV(xgb_model, parameters, cv=5, n_jobs=5, 
-                        scoring=scores, refit='precision_weighted', return_train_score=True)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=5, return_train_score=True,  n_iter=10, verbose=1)
     gs.fit(X_train, y_train)
 
-    print("Best parameters set found on development set: precision_weighted")
+    print("Best parameters set found on development set: ")
     print()
     print(gs.best_params_)
     print()
@@ -61,22 +57,12 @@ def main(argv):
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
 
-    precision = precision_score(y_test, y_pred, average='weighted')
-    recall = recall_score(y_test, y_pred, average='weighted')
-    f1 =  f1_score(y_test, y_pred, average='weighted')
     kappa = cohen_kappa_score(y_test, y_pred)
-    accuracy = accuracy_score(y_test, y_pred)
     matrix = confusion_matrix(y_test, y_pred)
-
-    print(f'Precision: {precision}')
-    print(f'Recall: {recall}')
-    print(f'Accuracy: {accuracy}')
-    print(f'F1: {f1}')
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
 
     viz.plot_confusionmx(matrix)
-    viz.plot_gridcv(gs.cv_results_, scores, "n_estimators",  n_trees[0], n_trees[-1])
 
 if __name__== "__main__":
   main(sys.argv)

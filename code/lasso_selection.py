@@ -12,7 +12,7 @@ from sklearn.model_selection import GridSearchCV
 sample_size = 100_000
 X, y, _ , _s = data.load(sample_size, normalize=False, balance=True) 
 
-alphas = np.geomspace(0.01,1)
+alphas = np.geomspace(0.1,1)
 clf = LassoCV(alphas=alphas, cv=10)
 clf.fit(X, y)
 
