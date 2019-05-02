@@ -30,7 +30,7 @@ indices = np.argsort(importances)[::-1]
 
 end=time.time()
 elapsed=end-start
-print(timedelta(seconds=elapsed))
+print("Run time: " + str(timedelta(seconds=elapsed)))
 
 y_pred = forest.predict(X_test)
 print(classification_report(y_test, y_pred))

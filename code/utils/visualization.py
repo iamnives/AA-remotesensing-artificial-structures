@@ -15,7 +15,7 @@ def plot_gridcv(results, scoring, param, limL, limH):
 
     ax = plt.gca()
     ax.set_xlim(limL, limH)
-    ax.set_ylim(0.4, 1)
+    ax.set_ylim(0.3, 1)
 
     # Get the regular numpy array from the MaskedArray
     X_axis = np.array(results['param_' + param].data, dtype=float)
