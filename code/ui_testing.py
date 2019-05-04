@@ -1,18 +1,20 @@
-from tkinter import *
-from utils import data
-import numpy as np
+import os
+import sys
 
-import train_random_forest
-import train_gradient_trees 
-import train_svm
+from tkinter import *
+import numpy as np
+ 
+from utils import data
+
+import tuning_models as tm
 
 master = Tk()
 cbuts = []
 
 algorithms = {
-   "RF": train_random_forest.main,
-   "SVM": train_svm.main,
-   "GTB": train_gradient_trees.main,
+   "RF": tm.rftree,
+   "SVM": tm.svm,
+   "GTB": tm.gradtree,
 }
 
 def select_all():

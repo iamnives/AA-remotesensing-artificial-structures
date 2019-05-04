@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
@@ -17,8 +18,12 @@ from sklearn.metrics import  make_scorer
 from utils import visualization as viz
 from utils import data
 
+from datetime import timedelta
+import time
+
 def main(argv):
 
+    start = time.time()
     train_size = 100_000
     X_train, y_train, X_test , y_test = data.load(train_size ,normalize=True, balance=False) 
 
@@ -55,6 +60,11 @@ def main(argv):
     matrix = confusion_matrix(y_test, y_pred)
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
+
+    
+    end=time.time()
+    elapsed=end-start
+    print("Run time: " + str(timedelta(seconds=elapsed)))
 
     viz.plot_confusionmx(matrix)
     viz.plot_gridcv(gs.cv_results_, ["kappa"], "n_estimators", N_s[0], N_s[-1])

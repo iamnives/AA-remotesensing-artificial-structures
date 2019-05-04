@@ -1,5 +1,7 @@
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 import numpy as np
 from sklearn import svm
 from sklearn.model_selection import GridSearchCV
@@ -17,10 +19,12 @@ from sklearn.metrics import cohen_kappa_score
 from scipy.stats import uniform
 from utils import visualization as viz
 from utils import data
+
 from datetime import timedelta
 import time
 
 def main(argv):
+
     start = time.time()
     train_size = 100_000
 
@@ -43,15 +47,15 @@ def main(argv):
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
 
-    end=time.time()
-    elapsed=end-start
-    print("Run time: " + str(timedelta(seconds=elapsed)))
-
     kappa = cohen_kappa_score(y_test, y_pred)
     matrix = confusion_matrix(y_test, y_pred)
 
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
+
+    end=time.time()
+    elapsed=end-start
+    print("Run time: " + str(timedelta(seconds=elapsed)))
 
     viz.plot_confusionmx(matrix)
     viz.plot_gridcv(gs.cv_results_, ["kappa"], "C", 0, 10)

@@ -1,6 +1,7 @@
 import gdal
+import os
 import sys
-import os 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
