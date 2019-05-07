@@ -5,7 +5,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-SRC_FOLDER = DATA_FOLDER + "clipped/"
+ROI = "lisboa-setubal/"
+
+SRC_FOLDER = DATA_FOLDER + "clipped/" + ROI
 
 def calculate_slope(elevation, dst):
     gdal.DEMProcessing(dst + '_slope.tif', elevation, 'slope')

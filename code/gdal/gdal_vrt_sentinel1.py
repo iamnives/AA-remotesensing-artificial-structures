@@ -8,7 +8,8 @@ import osr
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-SRC_FOLDER = DATA_FOLDER + "datasets/s1/"
+ROI = "lisboa-setubal/"
+SRC_FOLDER = DATA_FOLDER + "datasets/" + ROI + "s1/"
 
 bands = {
         'Gamma0_VH': [], 
@@ -40,7 +41,7 @@ def main(argv):
     src_dss = [f for f in os.listdir(SRC_FOLDER) if ".img" in f]
 
     for f in src_dss:
-        bands[f.split("-")[1].split(".")[0]].append(SRC_FOLDER + f)
+        bands[f.split(".")[0]].append(SRC_FOLDER + f)
 
     vrt_options = gdal.BuildVRTOptions(resolution='lowest')
     for b in bands:
@@ -49,5 +50,4 @@ def main(argv):
     
 if __name__== "__main__":
   main(sys.argv)
-
 

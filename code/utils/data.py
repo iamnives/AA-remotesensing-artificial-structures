@@ -8,11 +8,16 @@ from sklearn.model_selection import train_test_split
 from imblearn.combine import SMOTETomek
 from imblearn.under_sampling import RandomUnderSampler
 
+from tqdm import tqdm
+
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-DS_FOLDER = DATA_FOLDER + "clipped/"
-LB_FOLDER = DATA_FOLDER + "labels/"
-OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
+ROI = "vila-de-rei/"
+
+DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
+LB_FOLDER = DATA_FOLDER + "labels/" + ROI
+
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
 
 # Class to text for plotting features
 def feature_map(u):
@@ -53,18 +58,33 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(src_folder):
-    src_dss = [DS_FOLDER + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) ]
+def load_prediction(src_folder, normalize=True):
+    src_dss = [src_folder + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) ]
     src_dss.sort()
     X = []
-    for _, raster in enumerate(src_dss):
+
+    refDs = gdal.Open(src_folder + "clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
+    band = refDs.GetRasterBand(1).ReadAsArray()
+
+    nonZero = np.nonzero(band)
+    for raster in tqdm(src_dss):
         # Open raster dataset
-        print("Opening raster: " + raster)
         rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
         # Extract band's data and transform into a numpy array
         test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
-        X.append(test_ds)
-    return X
+        X.append(test_ds[nonZero])
+
+    # Transpose attributes matrix
+    X = np.dstack(tuple(X))[0]
+    X = X.astype(np.float64)
+    X[np.isnan(X)]=-1
+
+    if normalize:
+        normalizer = preprocessing.Normalizer().fit(X)
+        X = normalizer.transform(X) 
+
+    labelDS = gdal.Open(src_folder + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+    return X, labelDS.GetRasterBand(1).ReadAsArray()
 
 def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2):
     X = []
@@ -81,31 +101,32 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     isTrain = np.nonzero(labelBands)
     y = labelBands[isTrain]
 
-    print("Labels array shape, should be (n,): " + str(y.shape))
     # Get list of raster bands info as array, already indexed by labels non zero
-    for _, raster in enumerate(src_dss):
+    print("Datasets: Loading...")
+    for raster in tqdm(src_dss):
         if(("cos_50982.tif"  not in raster) and ("xml" not in raster)):
             # Open raster dataset
-            print("Opening raster: " + raster)
             rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
             # Extract band's data and transform into a numpy array
             test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
             X.append(test_ds[isTrain])
-        
-
+    
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
-    print("Done!") 
-    print("Features array shape, should be (n,k): " + str(X.shape))
-
     X = X.astype(np.float64)
+
+    print("Datasets: Done!           ") 
+    print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
 
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
 
     if map_classes:
-        y = np.array([maping_f(yi) for yi in y])
+        print("Class Mapping: Loading...")
+        y = np.array([maping_f(yi) for yi in tqdm(y)])
+        print("Class Mapping: Done!      ")
+
 
 
     # Split the dataset in two equal parts

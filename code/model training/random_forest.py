@@ -44,4 +44,6 @@ def train():
     elapsed=end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
 
-    dump(forest, 'filename.joblib')
+    dump(forest, 'forest.model')
+
+train()
