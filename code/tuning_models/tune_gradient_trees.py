@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-import xgboost as xgb
+import xgboost as xgb 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 
@@ -19,6 +19,7 @@ from scipy.stats import uniform
  
 from utils import visualization as viz
 from utils import data
+from utils import metrics
 
 from datetime import timedelta
 import time

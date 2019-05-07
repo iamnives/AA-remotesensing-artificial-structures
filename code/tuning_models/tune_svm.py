@@ -17,15 +17,17 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import cohen_kappa_score
 from scipy.stats import uniform
+
 from utils import visualization as viz
 from utils import data
+from utils import metrics
 
 from datetime import timedelta
 import time
 
 def model(dfs):
   start = time.time()
-  train_size = 100_000
+  train_size = 100_000 
 
   X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=False)
   # Set the parameters by cross-validation

@@ -17,9 +17,10 @@ from sklearn.metrics import  make_scorer
 
 from utils import visualization as viz
 from utils import data
+from utils import metrics
 
 from datetime import timedelta
-import time
+import time 
 
 def model(dfs):
   start = time.time()
