@@ -4,7 +4,7 @@
     <operator>Read</operator>
     <sources/>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\S1A_IW_GRDH_1SDV_20151215T063453_20151215T063518_009049_00CFCE_90AA.zip</file>
+      <file>D:\AA-remotesensing-artificial-structures\sensing_data\raw\S1A_IW_GRDH_1SDV_20151214T183456_20151214T183521_009042_00CF99_E959.zip</file>
       <formatName>SENTINEL-1</formatName>
     </parameters>
   </node>
@@ -65,7 +65,7 @@
   <node id="Calibration">
     <operator>Calibration</operator>
     <sources>
-      <sourceProduct refid="Read"/>
+      <sourceProduct refid="ThermalNoiseRemoval"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
@@ -98,13 +98,24 @@
       <reGridMethod>true</reGridMethod>
     </parameters>
   </node>
+  <node id="ThermalNoiseRemoval">
+    <operator>ThermalNoiseRemoval</operator>
+    <sources>
+      <sourceProduct refid="Read"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <selectedPolarisations>VH,VV</selectedPolarisations>
+      <removeThermalNoise>true</removeThermalNoise>
+      <reIntroduceThermalNoise>false</reIntroduceThermalNoise>
+    </parameters>
+  </node>
   <node id="Write">
     <operator>Write</operator>
     <sources>
       <sourceProduct refid="Terrain-Correction"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\S1A_IW_GRDH_1SDV_20151215T063453_20151215T063518_009049_00CFCE_90AA_Cal_Orb_TF_TC.dim</file>
+      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\S1A_IW_GRDH_1SDV_20151214T183456_20151214T183521_009042_00CF99_E959_NR_Cal_Orb_TF_TC.dim</file>
       <formatName>BEAM-DIMAP</formatName>
     </parameters>
   </node>
@@ -124,6 +135,9 @@
     </node>
     <node id="Terrain-Flattening">
       <displayPosition x="591.0" y="184.0"/>
+    </node>
+    <node id="ThermalNoiseRemoval">
+      <displayPosition x="61.0" y="236.0"/>
     </node>
     <node id="Write">
             <displayPosition x="909.0" y="203.0"/>

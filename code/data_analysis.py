@@ -17,7 +17,7 @@ from utils import data
 import scipy.stats as stats
 
 train_size = 100_000
-X, y, Xt , yt = data.load(train_size, normalize=False, balance=True) 
+X, y, Xt , yt = data.load(train_size, normalize=False, balance=False) 
 
 print(X.shape)
 f = plt.figure(1)
