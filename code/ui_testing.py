@@ -10,7 +10,7 @@ import tuning_models as tm
 
 master = Tk()
 cbuts = []
-
+ 
 algorithms = {
    "RF": tm.rftree,
    "SVM": tm.svm,

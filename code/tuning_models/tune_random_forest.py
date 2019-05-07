@@ -17,9 +17,10 @@ from sklearn.metrics import  make_scorer
 
 from utils import visualization as viz
 from utils import data
+from utils import metrics
 
 from datetime import timedelta
-import time
+import time 
 
 def main(argv):
 
@@ -44,7 +45,7 @@ def main(argv):
     print(f'# Tuning hyper-parameters for Random forest on { X_train.shape[0] } samples')
     print()
     kappa_scorer = make_scorer(cohen_kappa_score)
-    gs = RandomizedSearchCV(RandomForestClassifier(), tuning_params, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=True,  n_iter=1, verbose=2)
+    gs = RandomizedSearchCV(RandomForestClassifier(), tuning_params, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=True,  n_iter=100, verbose=2)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
@@ -55,13 +56,8 @@ def main(argv):
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
 
-    kappa = cohen_kappa_score(y_test, y_pred)
-    
-    matrix = confusion_matrix(y_test, y_pred)
-    print(f'Kappa: {kappa}')
-    print(classification_report(y_test, y_pred))
+    kappa, matrix, report = metrics.scores(y_test, y_pred)
 
-    
     end=time.time()
     elapsed=end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))

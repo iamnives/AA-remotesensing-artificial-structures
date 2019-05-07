@@ -96,7 +96,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
     # Split the dataset in two equal parts
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=(int(train_size*test_size)))
+        X, y, test_size=(int(train_size*test_size)), stratify=y)
 
     # Memory savings
     del X
@@ -121,6 +121,6 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
      # Split the dataset in two equal parts
     X_train, _, y_train , _ = train_test_split(
-        X_train, y_train, train_size=min(X_train.shape[0], train_size) )
+        X_train, y_train, train_size=min(X_train.shape[0], train_size), stratify=y_train)
 
     return X_train, y_train , X_test , y_test

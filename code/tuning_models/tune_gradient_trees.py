@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-import xgboost as xgb
+import xgboost as xgb 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 
@@ -19,6 +19,7 @@ from scipy.stats import uniform
  
 from utils import visualization as viz
 from utils import data
+from utils import metrics
 
 from datetime import timedelta
 import time
@@ -64,11 +65,8 @@ def main(argv):
 
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
-
-    kappa = cohen_kappa_score(y_test, y_pred)
-    matrix = confusion_matrix(y_test, y_pred)
-    print(f'Kappa: {kappa}')
-    print(classification_report(y_test, y_pred))
+    
+    kappa, matrix, report = metrics.scores(y_test, y_pred)
 
     end=time.time()
     elapsed=end-start
