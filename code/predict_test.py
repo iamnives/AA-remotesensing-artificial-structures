@@ -42,5 +42,4 @@ def predict():
     end=time.time()
     elapsed=end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
-
 predict()

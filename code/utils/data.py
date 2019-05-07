@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "lisboa-setubal/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 LB_FOLDER = DATA_FOLDER + "labels/" + ROI
