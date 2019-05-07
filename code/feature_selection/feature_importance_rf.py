@@ -19,7 +19,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 start = time.time()
 
-train_size = 100_000
+train_size = 200_000
 X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=False) 
 
 # Build a forest and compute the feature importances
