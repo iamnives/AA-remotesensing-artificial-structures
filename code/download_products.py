@@ -23,7 +23,7 @@ if __name__ == '__main__':
     start = datetime(2015, 1, 1)
     end = datetime(2016, 12, 31)
     it = end + timedelta(days=1)
-    os.chdir('/home/nives/AA-remotesensing-artificial-structures/sensing_data/raw/timeseries/s2')
+    os.chdir('D:\\AA-remotesensing-artificial-structures\\sensing_data\\raw\\timeseries\\s2')
     while it.date() != start.date():
         it -= timedelta(days=1)
         completedir = glob.glob('*' + it.date().strftime("%Y%m%d") + '*')
@@ -37,18 +37,19 @@ if __name__ == '__main__':
                 try:
                     print("Dia: " + str(it.date()))
                     api = SentinelAPI('amneves', 'Amnandre12')
-                    footprint = geojson_to_wkt(read_geojson('geojsontest.geojson'))
+                    footprint = geojson_to_wkt(read_geojson('geo.geojson'))
                     products = api.query(footprint,
                                          date=(it.date().strftime("%Y%m%d"), (it + timedelta(days=1)).date().strftime("%Y%m%d")),
                                          platformname='Sentinel-2',
                                          producttype='S2MSI1C',
-                                         cloudcoverpercentage=(0, 20))
+                                         area_relation='Contains',
+                                         cloudcoverpercentage=(0, 30))
                     dataframe = api.to_dataframe(products)
                     count = dataframe.shape[0]
                     print(str(count) + " produto(s) neste dia.")
                     #api.download_all(products)
                     #download(api, products)
-                    if count == 1:
+                    if count != 0:
                         nome = dataframe.get_values()[0][0]
                         p = multiprocessing.Process(target=foo, name="Foo", args=(api,products))
                         p.start()

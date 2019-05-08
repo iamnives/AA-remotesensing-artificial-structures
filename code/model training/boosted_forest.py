@@ -23,7 +23,7 @@ def train():
     start = time.time() 
 
     train_size = 200_000
-    X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=False) 
+    X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=True) 
 
     # Build a forest and compute the feature importances
     forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504, 
