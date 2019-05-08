@@ -5,18 +5,18 @@ import gdal
 import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
+
 from imblearn.combine import SMOTETomek
 from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import SMOTE
 
 from tqdm import tqdm
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "lisboa-setubal/"
+ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-LB_FOLDER = DATA_FOLDER + "labels/" + ROI
-
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
 
 # Class to text for plotting features
@@ -145,13 +145,15 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         X_train = normalizer.transform(X_train) 
         X_test = normalizer.transform(X_test)
 
-    if balance:
-        smt = RandomUnderSampler(sampling_strategy='auto', random_state=42)
-        X_train, y_train = smt.fit_sample(X_train, y_train)
-        print("Features array shape after balance: " + str(X_train.shape)) 
+   
 
      # Split the dataset in two equal parts
     X_train, _, y_train , _ = train_test_split(
         X_train, y_train, train_size=min(X_train.shape[0], train_size), stratify=y_train ,random_state=42)
+
+    if balance:
+        smt = SMOTE(sampling_strategy='auto', random_state=42)
+        X_train, y_train = smt.fit_sample(X_train, y_train)
+        print("Features array shape after balance: " + str(X_train.shape)) 
 
     return X_train, y_train , X_test , y_test
