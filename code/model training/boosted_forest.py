@@ -20,7 +20,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from joblib import dump, load
 
 def train():
-    start = time.time()
+    start = time.time() 
 
     train_size = 200_000
     X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=False) 
