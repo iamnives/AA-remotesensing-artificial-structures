@@ -29,7 +29,8 @@ OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
 def predict():
     start = time.time()
     X, y = data.load_prediction(DS_FOLDER)
-    print(X.shape)
+
+    shape = X.shape
     #load saved model
     forest = load('boosted.model')
 
@@ -39,6 +40,7 @@ def predict():
     print(f'Kappa: {kappa}')
     print(classification_report(y, y_pred))
 
+    # TODO reshape y_pred and print
     end=time.time()
     elapsed=end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
