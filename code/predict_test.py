@@ -24,24 +24,17 @@ import gdal
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/test_roads.tiff"
 
-def predict():
+def testi():
     start = time.time()
-    X, y = data.load_prediction(DS_FOLDER)
+    X, y, pic_shape = data.load_prediction(DS_FOLDER, normalize=False)
 
-    shape = X.shape
-    #load saved model
-    forest = load('boosted.model')
+   
+    yr = y.reshape(pic_shape)
+    viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt")
 
-    y_pred = forest.predict(X)
-
-    kappa = cohen_kappa_score(y, y_pred)
-    print(f'Kappa: {kappa}')
-    print(classification_report(y, y_pred))
-
-    # TODO reshape y_pred and print
     end=time.time()
     elapsed=end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
-predict()
+testi()

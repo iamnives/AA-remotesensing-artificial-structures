@@ -8,13 +8,13 @@ from sklearn.model_selection import train_test_split
 
 from imblearn.combine import SMOTETomek
 from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE, RandomOverSampler
 
 from tqdm import tqdm
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "lisboa-setubal/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
@@ -44,62 +44,80 @@ def _class_map(x):
         return 3
     elif x > 42 and x <= 48:
             return 4
-    return -1
+    return 0
 
 def _class_map_binary(x):
     if x >= 1 and x <= 13:
         return 1
     else:
         return 2
-    return -1
+    return 0
 
 def get_features():
-    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos_50982.tif"  not in f) and ("xml" not in f) ]
+    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos_50982.tif"  not in f) and ("xml" not in f) and ("_" in f) ]
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(src_folder, normalize=True):
-    src_dss = [src_folder + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) ]
+def load_prediction(src_folder, normalize=True, map_classes=True):
+    print("Prediction data: Loading...")
+    src_dss = [src_folder + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) and ("_" in f)]
     src_dss.sort()
     X = []
-
+    
     refDs = gdal.Open(src_folder + "clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
-
-    nonZero = np.nonzero(band)
+    shape = band.shape
+    
     for raster in tqdm(src_dss):
         # Open raster dataset
         rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
         # Extract band's data and transform into a numpy array
         test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
-        X.append(test_ds[nonZero])
+        X.append(test_ds[:shape[0],:shape[1]].flatten())
 
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
     X = X.astype(np.float64)
-    X[np.isnan(X)]=-1
+
+    X[~np.isfinite(X)] = -1
 
     if normalize:
         normalizer = preprocessing.Normalizer().fit(X)
         X = normalizer.transform(X) 
 
     labelDS = gdal.Open(src_folder + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-    return X, labelDS.GetRasterBand(1).ReadAsArray()
+    y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
+
+    labelDS = gdal.Open(src_folder + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
+    y[roads == 4] = roads[roads == 4]
+
+    if map_classes:
+        y = np.array([_class_map(yi) for yi in tqdm(y)])
+
+    print("Prediction data: Done!")
+    return X, y, shape
 
 def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2):
     X = []
 
     if(datafiles is None):
-        src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER)]
+        src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
     else: src_dss = datafiles
     src_dss.sort()
-    labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
 
     # Extract band's data and transform into a numpy array
+    labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     labelBands = labelDS.GetRasterBand(1).ReadAsArray()
+
+    labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    roads = labelDS.GetRasterBand(1).ReadAsArray()
+
     # Prepare training data (set of pixels used for training) and labels
     isTrain = np.nonzero(labelBands)
     y = labelBands[isTrain]
+    roads = roads[isTrain]
+    y[roads == 4] = roads[roads == 4]
 
     # Get list of raster bands info as array, already indexed by labels non zero
     print("Datasets: Loading...")
@@ -122,38 +140,35 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     if binary:
         maping_f = _class_map_binary
 
-    if map_classes:
-        print("Class Mapping: Loading...")
-        y = np.array([maping_f(yi) for yi in tqdm(y)])
-        print("Class Mapping: Done!      ")
-
-
-
     # Split the dataset in two equal parts
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=(int(train_size*test_size)), stratify=y, random_state=42)
+        X, y, test_size=(int(train_size*test_size)), train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
 
     # Prevents overflow on algoritms computations
     X_train = X_train.astype(np.float64)
     X_test = X_test.astype(np.float64)
 
-    X_train[np.isnan(X_train)]=-1
-    X_test[np.isnan(X_test)]=-1
+    X_train[~np.isfinite(X_train)] = -1
+    X_test[~np.isfinite(X_test)] = -1
     
     if normalize:
+        print("Normalization: Loading...")
         normalizer = preprocessing.Normalizer().fit(X_train)
         X_train = normalizer.transform(X_train) 
         X_test = normalizer.transform(X_test)
-
-   
-
-     # Split the dataset in two equal parts
-    X_train, _, y_train , _ = train_test_split(
-        X_train, y_train, train_size=min(X_train.shape[0], train_size), stratify=y_train ,random_state=42)
+        print("Done!")
 
     if balance:
-        smt = SMOTE(sampling_strategy='auto', random_state=42)
+        print("Data balance: Loading...")
+        smt = RandomOverSampler(sampling_strategy='not majority',random_state=42)
         X_train, y_train = smt.fit_sample(X_train, y_train)
         print("Features array shape after balance: " + str(X_train.shape)) 
+
+    if map_classes:
+        print("Class Mapping: Loading...")
+        y_train = np.array([maping_f(yi) for yi in tqdm(y_train)])
+        y_test = np.array([maping_f(yi) for yi in tqdm(y_test)])
+        print("Class Mapping: Done!      ")
+
 
     return X_train, y_train , X_test , y_test

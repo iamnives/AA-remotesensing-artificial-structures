@@ -3,6 +3,29 @@ import matplotlib
 import matplotlib.pyplot as plt 
 import pandas as pd
 import seaborn as sn
+import gdal
+
+#inicialize data location
+DATA_FOLDER = "../sensing_data/"
+ROI = "vila-de-rei/"
+
+DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
+
+def createGeotiff(outRaster, data, ref):
+        
+    labelDS = gdal.Open(ref, gdal.GA_ReadOnly)
+    geo_transform = labelDS.GetGeoTransform()
+    projection = labelDS.GetProjection()
+    # Create a GeoTIFF file with the given data
+    driver = gdal.GetDriverByName('GTiff')
+    rows, cols = data.shape
+    rasterDS = driver.Create(outRaster, cols, rows, 1, gdal.GDT_Byte)
+    rasterDS.SetGeoTransform(geo_transform)
+    rasterDS.SetProjection(projection)
+    band = rasterDS.GetRasterBand(1)
+    band.WriteArray(data)
+    dataset = None
 
 #PARAM: results = clf.cv_results_ , scorng = metric objects
 def plot_gridcv(results, scoring, param, limL, limH):

@@ -5,12 +5,10 @@ import gdal
  
 import numpy as np
 import matplotlib
-import scipy.stats as stats
 import matplotlib.pyplot as plt 
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-from scipy import stats
 from sklearn.model_selection import StratifiedShuffleSplit
 
 from utils import data
