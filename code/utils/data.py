@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "lisboa-setubal/"
+ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"

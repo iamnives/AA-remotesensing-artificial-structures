@@ -19,7 +19,7 @@ from joblib import dump, load
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "lisboa-setubal/"
+ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_roads_classification.tiff"
