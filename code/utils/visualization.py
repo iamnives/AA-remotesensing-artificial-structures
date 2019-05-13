@@ -12,14 +12,14 @@ ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
  
-def createGeotiff(outRaster, data, ref):
+def createGeotiff(outRaster, data, ref, dtype):
     labelDS = gdal.Open(ref, gdal.GA_ReadOnly)
     geo_transform = labelDS.GetGeoTransform()
     projection = labelDS.GetProjection()
     # Create a GeoTIFF file with the given data
     driver = gdal.GetDriverByName('GTiff')
     rows, cols = data.shape
-    rasterDS = driver.Create(outRaster, cols, rows, 1, gdal.GDT_Float64)
+    rasterDS = driver.Create(outRaster, cols, rows, 1, dtype)
     rasterDS.SetGeoTransform(geo_transform)
     rasterDS.SetProjection(projection)
     band = rasterDS.GetRasterBand(1)

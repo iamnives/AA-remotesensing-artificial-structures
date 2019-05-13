@@ -11,6 +11,7 @@ from datetime import timedelta
 import time
 from utils import visualization as viz
 
+import gdal
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import classification_report
 import xgboost as xgb
@@ -63,7 +64,7 @@ print(classification_report(y, y_pred))
 
 yr = y_pred.reshape(shape)
 
-viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt")
+viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
 
 end=time.time()
 elapsed=end-start
