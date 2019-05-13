@@ -11,7 +11,7 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
-
+ 
 def createGeotiff(outRaster, data, ref):
     labelDS = gdal.Open(ref, gdal.GA_ReadOnly)
     geo_transform = labelDS.GetGeoTransform()
