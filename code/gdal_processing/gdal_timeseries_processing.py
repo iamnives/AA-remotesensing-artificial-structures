@@ -71,9 +71,7 @@ def main(argv):
 		std = np.std(timeseries, axis=0) # standard dev
 		variance = np.sqrt(std) # variance
 
-		viz.createGeotiff(DST_FOLDER + "mean.tiff", mean_ts, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + "std.tiff", std, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
-		print("Saving done!")
+		viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
 		break 
 
 # np.mean(a, axis=0), np.quantile(a, 0.25, axis=0),
