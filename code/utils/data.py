@@ -88,9 +88,9 @@ def load_prediction(src_folder, normalize=True, map_classes=True):
     labelDS = gdal.Open(src_folder + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
 
-    labelDS = gdal.Open(src_folder + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-    roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
-    y[roads == 4] = roads[roads == 4]
+    # labelDS = gdal.Open(src_folder + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    # roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
+    # y[roads == 4] = roads[roads == 4]
 
     if map_classes:
         y = np.array([_class_map(yi) for yi in tqdm(y)])
@@ -110,14 +110,14 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     labelBands = labelDS.GetRasterBand(1).ReadAsArray()
 
-    labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-    roads = labelDS.GetRasterBand(1).ReadAsArray()
+    # labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    # roads = labelDS.GetRasterBand(1).ReadAsArray()
 
     # Prepare training data (set of pixels used for training) and labels
     isTrain = np.nonzero(labelBands)
     y = labelBands[isTrain]
-    roads = roads[isTrain]
-    y[roads == 4] = roads[roads == 4]
+    # roads = roads[isTrain]
+    # y[roads == 4] = roads[roads == 4]
 
     # Get list of raster bands info as array, already indexed by labels non zero
     print("Datasets: Loading...")

@@ -22,11 +22,11 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_roads_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_20px_classification.tiff"
 
 start = time.time() 
 
-train_size = 500_000
+train_size = int(19386625*0.2)
 X, y, X_test , y_test  = data.load(train_size, normalize=False, balance=False) 
 
 # Build a forest and compute the feature importances

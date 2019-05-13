@@ -20,7 +20,7 @@ def createGeotiff(outRaster, data, ref):
     # Create a GeoTIFF file with the given data
     driver = gdal.GetDriverByName('GTiff')
     rows, cols = data.shape
-    rasterDS = driver.Create(outRaster, cols, rows, 1, gdal.GDT_Byte)
+    rasterDS = driver.Create(outRaster, cols, rows, 1, gdal.GDT_Float64)
     rasterDS.SetGeoTransform(geo_transform)
     rasterDS.SetProjection(projection)
     band = rasterDS.GetRasterBand(1)
