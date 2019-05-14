@@ -32,9 +32,7 @@ def main(argv):
 	"B8A": [],
 	"B09": [],
 	"B11": [],
-	"B10": [],
 	"B12": [],
-	"B01": [],
 	}
 
 	src_dss = [f for f in os.listdir(SRC_FOLDER) if ".jp2" in f]
@@ -76,7 +74,6 @@ def main(argv):
 		viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
 		viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
 		viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_std.tiff", std, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
 		viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
 		
 
