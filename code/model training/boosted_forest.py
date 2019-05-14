@@ -12,9 +12,7 @@ import time
 from utils import visualization as viz
 
 import gdal
-from sklearn.metrics import cohen_kappa_score
-from sklearn.metrics import classification_report
-import xgboost as xgb
+from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
 
 from joblib import dump, load
 
@@ -23,7 +21,7 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_20px_ts_clean_tex_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_20px_ts_roads_classification.tiff"
 
 start = time.time() 
 
@@ -49,6 +47,7 @@ y_pred = forest.predict(X_test)
 kappa = cohen_kappa_score(y_test, y_pred)
 print(f'Kappa: {kappa}')
 print(classification_report(y_test, y_pred))
+print(confusion_matrix(y_test, y_pred))
 
 dump(forest, '../sensing_data/models/boosted.joblib')
 print("Saved model to disk")
