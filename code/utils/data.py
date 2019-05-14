@@ -17,7 +17,7 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "classification.tiff"
+TS_FOLDER = DS_FOLDER + "tstats/"
 
 # Class to text for plotting features
 def feature_map(u):
@@ -58,15 +58,17 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(src_folder, normalize=True, map_classes=True):
+def load_prediction(src_folder, ratio=1, normalize=True, map_classes=True):
     print("Prediction data: Loading...")
     src_dss = [src_folder + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) and ("_" in f)]
+    ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    src_dss = src_dss + ts_dss
     src_dss.sort()
     X = []
     
     refDs = gdal.Open(src_folder + "clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
-    shape = band.shape
+    shape = tuple([int(ratio*i) for i in band.shape])
     
     for raster in tqdm(src_dss):
         # Open raster dataset
@@ -77,7 +79,7 @@ def load_prediction(src_folder, normalize=True, map_classes=True):
 
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
-    X = X.astype(np.float64)
+    X = X.astype(np.float32)
 
     X[~np.isfinite(X)] = -1
 
@@ -103,6 +105,8 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
     if(datafiles is None):
         src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+        ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+        src_dss = src_dss + ts_dss
     else: src_dss = datafiles
     src_dss.sort()
 
@@ -131,7 +135,6 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
-    X = X.astype(np.float64)
 
     print("Datasets: Done!           ") 
     print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
@@ -145,8 +148,8 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         X, y, test_size=(int(train_size*test_size)), train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
 
     # Prevents overflow on algoritms computations
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
+    X_train = X_train.astype(np.float32)
+    X_test = X_test.astype(np.float32)
 
     X_train[~np.isfinite(X_train)] = -1
     X_test[~np.isfinite(X_test)] = -1

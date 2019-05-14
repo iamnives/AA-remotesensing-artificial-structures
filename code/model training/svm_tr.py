@@ -12,6 +12,7 @@ import time
 from utils import visualization as viz
 from utils import data
 
+import gdal
 from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import classification_report
@@ -23,7 +24,7 @@ from joblib import dump, load
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "svm_roads_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "svm_100k_ts_classification.tiff"
 
 start = time.time()
 
@@ -40,6 +41,8 @@ kappa = cohen_kappa_score(y_test, y_pred)
 print(f'Kappa: {kappa}')
 print(classification_report(y_test, y_pred))
 
+dump(sv, '../sensing_data/models/svm.joblib')
+print("Saved model to disk")
 # Testing trash
 X, y, shape = data.load_prediction(DS_FOLDER, normalize=True)
 print(X.shape, y.shape)
@@ -54,7 +57,7 @@ print(classification_report(y, y_pred))
 
 yr = y_pred.reshape(shape)
 
-viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt")
+viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
 
 end=time.time()
 elapsed=end-start

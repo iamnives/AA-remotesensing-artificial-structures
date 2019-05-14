@@ -61,18 +61,24 @@ def main(argv):
 		timeseries = np.array(timeseries)
 		
 		# Using quartiles, change to 0.05 quantiles later if load isn't too much...
-		print(timeseries.shape)
 		mean_ts = np.mean(timeseries, axis=0) # mean
 		q0 = np.quantile(timeseries, 0.00, axis=0) # minimum
 		q1= np.quantile(timeseries, 0.25, axis=0) # first quantile
 		q2= np.quantile(timeseries, 0.50, axis=0) # median
 		q3= np.quantile(timeseries, 0.75, axis=0) # third quantile
-		q5= np.quantile(timeseries, 1.0, axis=0) #  maximum
+		q4= np.quantile(timeseries, 1.0, axis=0) #  maximum
 		std = np.std(timeseries, axis=0) # standard dev
 		variance = np.sqrt(std) # variance
 
 		viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
-		break 
+		viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_std.tiff", std, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance, SRC + "clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+		
 
 # np.mean(a, axis=0), np.quantile(a, 0.25, axis=0),
 if __name__== "__main__":

@@ -17,6 +17,8 @@ from utils import visualization as viz
 from utils import data
 from utils import metrics
 
+import gdal
+
 from datetime import timedelta
 import time
 
@@ -34,13 +36,13 @@ import numpy as np
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "neural_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "neural_20px_classification.tiff"
 
 # Tensorflow trash
 def model(dfs):
   start = time.time()
-  train_size = 200_000
-  X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=True)
+  train_size = int(19386625*0.2)
+  X_train, y_train, X_test , y_test = data.load(train_size, normalize=True, balance=False)
 
 
   input_shape = X_train.shape[1]
@@ -55,12 +57,14 @@ def model(dfs):
   # Define DNN structure
   dnn.add(Dense(32, input_dim=input_shape, activation='relu'))
   dnn.add(Dense(64, input_dim=input_shape, activation='relu'))
+  dnn.add(Dropout(0.2))
   dnn.add(Dense(16, input_dim=input_shape, activation='relu'))
+  dnn.add(Dropout(0.4))
   dnn.add(Dense(units=logits, activation='softmax'))
 
   dnn.compile(
       loss='categorical_crossentropy',
-      optimizer='Adadelta',
+      optimizer='Nadam',
       metrics=['accuracy']
       )
   dnn.summary()
@@ -74,6 +78,14 @@ def model(dfs):
   kappa = cohen_kappa_score(y_test, y_pred)
   print(f'Kappa: {kappa}')
   print(classification_report(y_test, y_pred))
+
+  # serialize model to YAML
+  model_yaml = dnn.to_yaml()
+  with open("../sensing_data/models/dnn_tf.yaml", "w") as yaml_file:
+      yaml_file.write(model_yaml)
+  # serialize weights to HDF5
+  dnn.save_weights("../sensing_data/models/dnn_tf.h5")
+  print("Saved model to disk")
 
   # Testing trash
   X, y, shape = data.load_prediction(DS_FOLDER, normalize=True)
@@ -89,7 +101,7 @@ def model(dfs):
   y_pred = np.array(y_pred)
   yr = y_pred.reshape(shape)
 
-  viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt")
+  viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
 
   end=time.time()
   elapsed=end-start

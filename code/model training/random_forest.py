@@ -12,6 +12,7 @@ import time
 from utils import visualization as viz
 from utils import data
 
+import gdal
 from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import classification_report
@@ -23,11 +24,11 @@ from joblib import dump, load
 DATA_FOLDER = "../sensing_data/"
 ROI = "lisboa-setubal/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "rf_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "rf_20px_classification.tiff"
 
 start = time.time()
 
-train_size = 500_000
+train_size = int(19386625*0.2)
 X, y, X_test , y_test  = data.load(train_size, normalize=False, balance=False) 
 
 # Build a forest and compute the feature importances
@@ -45,6 +46,9 @@ kappa = cohen_kappa_score(y_test, y_pred)
 print(f'Kappa: {kappa}')
 print(classification_report(y_test, y_pred))
 
+dump(forest, '../sensing_data/models/forest.joblib')
+print("Saved model to disk")
+
 # Testing trash
 X, y, shape = data.load_prediction(DS_FOLDER, normalize=False)
 print(X.shape, y.shape)
@@ -59,7 +63,7 @@ print(classification_report(y, y_pred))
 
 yr = y_pred.reshape(shape)
 
-viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt")
+viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
 
 end=time.time()
 elapsed=end-start

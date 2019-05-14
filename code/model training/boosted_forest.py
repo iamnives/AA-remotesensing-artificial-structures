@@ -50,9 +50,12 @@ kappa = cohen_kappa_score(y_test, y_pred)
 print(f'Kappa: {kappa}')
 print(classification_report(y_test, y_pred))
 
+dump(forest, '../sensing_data/models/boosted.joblib')
+print("Saved model to disk")
 # Testing trash
-X, y, shape = data.load_prediction(DS_FOLDER, normalize=False)
-
+X, y, shape = data.load_prediction(DS_FOLDER, ratio=0.5 ,normalize=False)
+ 
+# reduce to half size maybe just for the lol
 print(X.shape, y.shape)
 
 forest.get_booster().set_param('predictor', 'cpu_predictor')
@@ -69,6 +72,3 @@ viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.
 end=time.time()
 elapsed=end-start
 print("Run time: " + str(timedelta(seconds=elapsed)))
-
-
-
