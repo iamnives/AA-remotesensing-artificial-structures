@@ -7,8 +7,10 @@ from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
 from imblearn.combine import SMOTETomek
-from imblearn.under_sampling import RandomUnderSampler
+from imblearn.under_sampling import RandomUnderSampler, TomekLinks
 from imblearn.over_sampling import SMOTE, RandomOverSampler
+from imblearn.combine import SMOTETomek
+from imblearn.ensemble import RUSBoostClassifier
 
 from tqdm import tqdm
 
@@ -163,7 +165,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
     if balance:
         print("Data balance: Loading...")
-        smt = RandomOverSampler(sampling_strategy='not majority',random_state=42)
+        smt = TomekLinks(sampling_strategy='not minority', n_jobs=4, random_state=42)
         X_train, y_train = smt.fit_sample(X_train, y_train)
         print("Features array shape after balance: " + str(X_train.shape)) 
 

@@ -14,7 +14,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from utils import data
 import scipy.stats as stats
 
-train_size = 100_000
+train_size = train_size = int(19386625*0.05)
 X, y, Xt , yt = data.load(train_size, normalize=False, balance=False) 
 
 print(X.shape)
