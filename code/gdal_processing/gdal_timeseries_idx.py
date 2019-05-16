@@ -17,7 +17,7 @@ def main(argv):
 	sets = [f.split("clipped")[0] for f in src_dss]
 	sets = np.unique(sets)
 
-	for f_id in enumerate(tqdm(sets)):
+	for f_id in tqdm(sets):
 		print(f_id)
 
 if __name__== "__main__":
