@@ -1,0 +1,46 @@
+<graph id="Graph">
+  <version>1.0</version>
+  <node id="Read">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>D:\AA-remotesensing-artificial-structures\sensing_data\raw\timeseries\s1\S1A_IW_GRDH_1SDV_20160102T182702_20160102T182727_009319_00D779_099F.zip</file>
+    </parameters>
+  </node>
+  <node id="Land-Sea-Mask">
+    <operator>Land-Sea-Mask</operator>
+    <sources>
+      <sourceProduct refid="Read"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <sourceBands/>
+      <landMask>false</landMask>
+      <useSRTM>true</useSRTM>
+      <geometry>ROI_cos</geometry>
+      <invertGeometry>false</invertGeometry>
+      <shorelineExtension>0</shorelineExtension>
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="Land-Sea-Mask"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>D:\AA-remotesensing-artificial-structures\sensing_data\raw\timeseries\s1\S1A_IW_GRDH_1SDV_20160102T182702_20160102T182727_009319_00D779_099F.dim</file>
+      <formatName>BEAM-DIMAP</formatName>
+    </parameters>
+  </node>
+  <applicationData id="Presentation">
+    <Description/>
+    <node id="Read">
+            <displayPosition x="37.0" y="134.0"/>
+    </node>
+    <node id="Land-Sea-Mask">
+      <displayPosition x="211.0" y="217.0"/>
+    </node>
+    <node id="Write">
+            <displayPosition x="455.0" y="135.0"/>
+    </node>
+  </applicationData>
+</graph>

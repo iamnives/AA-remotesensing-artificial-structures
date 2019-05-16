@@ -1,7 +1,8 @@
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
- 
+
+import xgboost as xgb 
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 from utils import data
@@ -39,7 +40,7 @@ forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504,
                         n_jobs=4,
                         objective='multi:softmax', 
                         predictor='gpu_predictor', 
-                        tree_method='gpu_hist', verbosity=2)
+                        tree_method='gpu_hist')
 
 forest.fit(X, y, eval_metric='logloss')
 y_pred = forest.predict(X_test)

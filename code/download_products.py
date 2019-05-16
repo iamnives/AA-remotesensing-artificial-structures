@@ -20,10 +20,10 @@ if __name__ == '__main__':
     #orig_stdout = sys.stdout
     #f = open('C:\\Users\\Igor\\.spyder-py3\\script_download_log.txt', 'w')
     #sys.stdout = f
-    start = datetime(2015, 1, 1)
+    start = datetime(2016, 1, 1)
     end = datetime(2016, 12, 31)
     it = end + timedelta(days=1)
-    os.chdir('D:\\AA-remotesensing-artificial-structures\\sensing_data\\raw\\timeseries\\s2')
+    os.chdir('D:\\AA-remotesensing-artificial-structures\\sensing_data\\raw\\timeseries\\s1')
     while it.date() != start.date():
         it -= timedelta(days=1)
         completedir = glob.glob('*' + it.date().strftime("%Y%m%d") + '*')
@@ -40,10 +40,10 @@ if __name__ == '__main__':
                     footprint = geojson_to_wkt(read_geojson('geo.geojson'))
                     products = api.query(footprint,
                                          date=(it.date().strftime("%Y%m%d"), (it + timedelta(days=1)).date().strftime("%Y%m%d")),
-                                         platformname='Sentinel-2',
-                                         producttype='S2MSI1C',
+                                         platformname='Sentinel-1',
+                                         producttype='GRD',
                                          area_relation='Contains',
-                                         cloudcoverpercentage=(0, 30))
+                                         polarisationmode= 'VV VH')
                     dataframe = api.to_dataframe(products)
                     count = dataframe.shape[0]
                     print(str(count) + " produto(s) neste dia.")
