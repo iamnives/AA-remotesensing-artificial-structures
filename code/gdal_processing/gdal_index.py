@@ -14,7 +14,6 @@ INDEXES =	{
   "EVI": ('"2,5 * (A-B)/((A+6*B-7,5*C) + 1)"', "B08", "B04", "B02"),
   "NDWI": ('"(A-B)/(A+B)"', "B03", "B08"),
   "NDBI": ('"(A-B)/(A+B)"', "B11", "B08"),
-  "NDBIv2": ('"(A-B)/(A+B)"', "B12", "B08"),
 }
 GDAL_PROCESS = "C:/OSGeo4W64/bin/gdal_calc.py"
 

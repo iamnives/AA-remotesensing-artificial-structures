@@ -42,7 +42,7 @@ forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504,
                         predictor='gpu_predictor', 
                         tree_method='gpu_hist')
 
-forest.fit(X, y, eval_metric='logloss')
+forest.fit(X, y)
 y_pred = forest.predict(X_test)
 
 kappa = cohen_kappa_score(y_test, y_pred)

@@ -68,7 +68,7 @@ def load_prediction(src_folder, ratio=1, normalize=True, map_classes=True):
     src_dss.sort()
     X = []
     
-    refDs = gdal.Open(src_folder + "clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
+    refDs = gdal.Open(src_folder + "/ignored/clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
     shape = tuple([int(ratio*i) for i in band.shape])
     

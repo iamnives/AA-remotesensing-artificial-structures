@@ -4,8 +4,8 @@
     <operator>Read</operator>
     <sources/>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>D:\AA-remotesensing-artificial-structures\sensing_data\raw\S1A_IW_GRDH_1SDV_20151214T183456_20151214T183521_009042_00CF99_E959.zip</file>
-      <formatName>SENTINEL-1</formatName>
+      <file>D:\AA-remotesensing-artificial-structures\sensing_data\raw\timeseries\s1_clipped\subset_1_of_S1A_IW_GRDH_1SDV_20160102T182702_20160102T182727_009319_00D779_099F.dim</file>
+      <formatName>BEAM-DIMAP</formatName>
     </parameters>
   </node>
   <node id="Terrain-Correction">
@@ -14,7 +14,7 @@
       <sourceProduct refid="Terrain-Flattening"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <sourceBands>Gamma0_VH,Gamma0_VV</sourceBands>
+      <sourceBands/>
       <demName>SRTM 3Sec</demName>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
@@ -87,7 +87,7 @@
       <sourceProduct refid="Apply-Orbit-File"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <sourceBands>Sigma0_VH,Gamma0_VH,Beta0_VH,Sigma0_VV,Gamma0_VV,Beta0_VV</sourceBands>
+      <sourceBands/>
       <demName>SRTM 1Sec HGT</demName>
       <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
       <externalDEMFile/>
@@ -115,7 +115,7 @@
       <sourceProduct refid="Terrain-Correction"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>C:\Users\amnev\Desktop\AA-remotesensing-artificial-structures\sensing_data\raw\s1_corrected\S1A_IW_GRDH_1SDV_20151214T183456_20151214T183521_009042_00CF99_E959_NR_Cal_Orb_TF_TC.dim</file>
+      <file>D:\AA-remotesensing-artificial-structures\sensing_data\raw\timeseries\s1_corrected\S1A_IW_GRDH_1SDV_20151214T183456_20151214T183521_009042_00CF99_E959_NR_Cal_Orb_TF_TC.dim</file>
       <formatName>BEAM-DIMAP</formatName>
     </parameters>
   </node>
