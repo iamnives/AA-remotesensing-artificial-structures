@@ -20,6 +20,7 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
+TS1_FOLDER = DS_FOLDER + "t1stats/"
 
 # Class to text for plotting features
 def feature_map(u):
@@ -64,7 +65,9 @@ def load_prediction(src_folder, ratio=1, normalize=True, map_classes=True):
     print("Prediction data: Loading...")
     src_dss = [src_folder + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) and ("_" in f)]
     ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
-    src_dss = src_dss + ts_dss
+    ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+
+    src_dss = src_dss + ts_dss + ts1_dss
     src_dss.sort()
     X = []
     
@@ -108,7 +111,9 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     if(datafiles is None):
         src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
         ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
-        src_dss = src_dss + ts_dss
+        ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+
+        src_dss = src_dss + ts_dss + ts1_dss
     else: src_dss = datafiles
     src_dss.sort()
 

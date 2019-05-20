@@ -15,25 +15,23 @@ from utils import visualization as viz
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
-SRC_FOLDER = SRC +  "ts/"
+SRC_FOLDER = SRC +  "ts1/"
  
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/tstats/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/t1stats/"
 
 def main(argv):
 	bands ={
-	"ndvi": [],
-	"ndbi": [],
-	"evi": [],
-	"ndwi": []
+	"VV": [],
+	"VH": [],
 	}
 
-	src_dss = [f for f in os.listdir(SRC_FOLDER) if (".jp2" in f) or (".tif" in f)]
+	src_dss = [f for f in os.listdir(SRC_FOLDER) if (".jp2" in f) or (".tif" in f) or (".img" in f)]
 	src_dss.sort()
 
 	# Reference files
 	for f in src_dss:
 		try:
-			bands[f.split("_")[3].split(".")[0]].append(SRC_FOLDER + f)
+			bands[f.split("_")[2].split(".")[0]].append(SRC_FOLDER + f)
 		except KeyError:
 			print("ignoring")
 

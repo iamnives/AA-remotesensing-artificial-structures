@@ -22,8 +22,8 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_20px_ts_roads_classification.tiff"
-
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "boosted_20px_ts12_roads_classification.tiff"
+REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/clipped_sentinel2_B03.vrt"
 start = time.time() 
 
 train_size = int(19386625*0.2)
@@ -67,7 +67,7 @@ print(classification_report(y, y_pred))
 
 yr = y_pred.reshape(shape)
 
-viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
+viz.createGeotiff(OUT_RASTER, yr, REF_FILE , gdal.GDT_Byte)
 
 end=time.time()
 elapsed=end-start
