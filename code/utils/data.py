@@ -61,9 +61,9 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(src_folder, ratio=1, normalize=True, map_classes=True):
+def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=True):
     print("Prediction data: Loading...")
-    src_dss = [src_folder + f for f in os.listdir(src_folder) if ("cos_50982.tif" not in f) and ("xml" not in f) and ("_" in f)]
+    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos_50982.tif" not in f) and ("xml" not in f) and ("_" in f)]
     ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
     ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
 
@@ -71,7 +71,7 @@ def load_prediction(src_folder, ratio=1, normalize=True, map_classes=True):
     src_dss.sort()
     X = []
     
-    refDs = gdal.Open(src_folder + "/ignored/clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
+    refDs = gdal.Open(DS_FOLDER + "/ignored/static/clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
     shape = tuple([int(ratio*i) for i in band.shape])
     
@@ -90,22 +90,28 @@ def load_prediction(src_folder, ratio=1, normalize=True, map_classes=True):
 
     if normalize:
         normalizer = preprocessing.Normalizer().fit(X)
-        X = normalizer.transform(X) 
+        X = normalizer.transform(X)  
 
-    labelDS = gdal.Open(src_folder + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+    labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
 
-    labelDS = gdal.Open(src_folder + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-    roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
-    y[roads == 4] = roads[roads == 4]
+    if osm_roads:
+        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+        roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
+        y[roads == 4] = roads[roads == 4]
+
+    maping_f = _class_map
+    if binary:
+        maping_f = _class_map_binary
 
     if map_classes:
-        y = np.array([_class_map(yi) for yi in tqdm(y)])
+        y = np.array([maping_f(yi) for yi in tqdm(y)])
+
 
     print("Prediction data: Done!")
     return X, y, shape
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2):
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True):
     X = []
 
     if(datafiles is None):
@@ -126,9 +132,12 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
     # Prepare training data (set of pixels used for training) and labels
     isTrain = np.nonzero(labelBands)
+
     y = labelBands[isTrain]
     roads = roads[isTrain]
-    y[roads == 4] = roads[roads == 4]
+
+    if osm_roads:
+        y[roads == 4] = roads[roads == 4]
 
     # Get list of raster bands info as array, already indexed by labels non zero
     print("Datasets: Loading...")

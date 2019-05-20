@@ -33,7 +33,7 @@ def getBand(f):
 	return refDs.GetRasterBand(1).ReadAsArray().astype(np.float)
 
 def main(argv):
-	src_dss = [f for f in os.listdir(SRC_FOLDER) if ".jp2" in f]
+	src_dss = [f for f in os.listdir(SRC_FOLDER) if ".tif" in f]
 	src_dss.sort()
 	sets = [f.split("clipped")[0] for f in src_dss]
 	sets = np.unique(sets)
@@ -47,7 +47,6 @@ def main(argv):
 		green = getBand(data[2])
 		red = getBand(data[3])
 		swir = getBand(data[10])
-		blue = getBand(data[1])
 
 		id1 = ndvi(nir, red, ref)
 		id2 = ndwi(green, nir, ref)

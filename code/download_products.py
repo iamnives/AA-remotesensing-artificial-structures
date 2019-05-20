@@ -40,17 +40,17 @@ if __name__ == '__main__':
                     footprint = geojson_to_wkt(read_geojson('geo.geojson'))
                     products = api.query(footprint,
                                          date=(it.date().strftime("%Y%m%d"), (it + timedelta(days=1)).date().strftime("%Y%m%d")),
-                                         platformname='Sentinel-1',
-                                         producttype='GRD',
-                                         area_relation='Contains',
-                                         polarisationmode= 'VV VH')
+                                        platformname='Sentinel-2',
+                                        producttype='S2MSI1C',
+                                        area_relation='Contains',
+                                        cloudcoverpercentage=(0, 30))
                     dataframe = api.to_dataframe(products)
                     count = dataframe.shape[0]
                     print(str(count) + " produto(s) neste dia.")
                     #api.download_all(products)
                     #download(api, products)
-                    if count != 0:
-                        nome = dataframe.get_values()[0][0]
+                    if count == 1:
+                        nome = dataframe.get_values()
                         p = multiprocessing.Process(target=foo, name="Foo", args=(api,products))
                         p.start()
                         print("A aguardar download de " + nome + ".zip")

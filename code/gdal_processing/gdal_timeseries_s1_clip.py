@@ -7,15 +7,17 @@ import numpy
 from tqdm import tqdm
 
 #inicialize data location
-DATA_FOLDER = "../sensing_data/raw/"
+DATA_FOLDER = "../sensing_data/raw/timeseries/"
 ROI = "vila-de-rei/"
-SRC_S2 = DATA_FOLDER + "timeseries/s1_corrected/"
-
-DST_FOLDER = "../sensing_data/" + "clipped/" + ROI + "ts1/"
 MASK = "../vector_data/" + ROI + "ROI.shp" 
+
+
+SRC = DATA_FOLDER + ROI + "/s1_corrected/"
+DST_FOLDER = "../sensing_data/" + "clipped/" + ROI + "ts1/"
+
  
 def main(argv):
-	src_dss = [SRC_S2 + f for f in os.listdir(SRC_S2) if ".dim" not in f]
+	src_dss = [SRC + f for f in os.listdir(SRC) if ".dim" not in f]
 	src_dss.sort()
 
 	for idx, f in enumerate(tqdm(src_dss)):
