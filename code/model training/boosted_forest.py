@@ -38,7 +38,7 @@ forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504,
                         min_child_weight=1,
                         n_estimators=1500,
                         n_jobs=4,
-                        objective='multi:softmax', # binary:hinge if binary classification
+                        objective='binary:hinge', # binary:hinge if binary classification
                         predictor='gpu_predictor', 
                         tree_method='gpu_hist')
 

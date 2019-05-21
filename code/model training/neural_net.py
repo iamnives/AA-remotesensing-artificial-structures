@@ -12,7 +12,8 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import cohen_kappa_score
 from scipy.stats import uniform
- 
+from sklearn.utils import class_weight
+
 from utils import visualization as viz
 from utils import data
 from utils import metrics
@@ -36,7 +37,9 @@ import numpy as np
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "neural_20px_classification.tiff"
+
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/neural_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
+REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
 
 # Tensorflow trash
 def model(dfs):
@@ -51,14 +54,16 @@ def model(dfs):
   y_train = y_train - 1
   y_test = y_test - 1
 
+  class_weights = class_weight.compute_class_weight('balanced',
+                                                 np.unique(y_train),
+                                                 y_train)
+
   y_train_onehot = tf.keras.utils.to_categorical(y_train, num_classes=logits)
 
   dnn = Sequential()
   # Define DNN structure
   dnn.add(Dense(32, input_dim=input_shape, activation='relu'))
   dnn.add(Dense(64, input_dim=input_shape, activation='relu'))
-  dnn.add(Dropout(0.2))
-  dnn.add(Dense(16, input_dim=input_shape, activation='relu'))
   dnn.add(Dropout(0.4))
   dnn.add(Dense(units=logits, activation='softmax'))
 
@@ -70,7 +75,7 @@ def model(dfs):
   dnn.summary()
 
   dnn.fit(X_train, y_train_onehot,
-            epochs=10, validation_split = 0.1)
+            epochs=10, validation_split = 0.2, class_weight=class_weights)
 
   y_pred_onehot = dnn.predict(X_test)
   y_pred = [np.argmax(pred) for pred in y_pred_onehot]
@@ -79,16 +84,8 @@ def model(dfs):
   print(f'Kappa: {kappa}')
   print(classification_report(y_test, y_pred))
 
-  # serialize model to YAML
-  model_yaml = dnn.to_yaml()
-  with open("../sensing_data/models/dnn_tf.yaml", "w") as yaml_file:
-      yaml_file.write(model_yaml)
-  # serialize weights to HDF5
-  dnn.save_weights("../sensing_data/models/dnn_tf.h5")
-  print("Saved model to disk")
-
   # Testing trash
-  X, y, shape = data.load_prediction(DS_FOLDER, normalize=True)
+  X, y, shape = data.load_prediction(ratio=0.5 , normalize=True)
   print(X.shape, y.shape)
 
   y_pred = dnn.predict(X)
@@ -101,7 +98,15 @@ def model(dfs):
   y_pred = np.array(y_pred)
   yr = y_pred.reshape(shape)
 
-  viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
+  viz.createGeotiff(OUT_RASTER, yr, REF_FILE, gdal.GDT_Byte)
+
+   # serialize model to YAML
+  model_yaml = dnn.to_yaml()
+  with open("../sensing_data/models/dnn_tf.yaml", "w") as yaml_file:
+      yaml_file.write(model_yaml)
+  # serialize weights to HDF5
+  dnn.save_weights("../sensing_data/models/dnn_tf.h5")
+  print("Saved model to disk")
 
   end=time.time()
   elapsed=end-start
