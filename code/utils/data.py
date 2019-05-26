@@ -6,7 +6,6 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
-from imblearn.combine import SMOTETomek
 from imblearn.under_sampling import RandomUnderSampler, TomekLinks
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.combine import SMOTETomek
@@ -110,6 +109,24 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
 
     print("Prediction data: Done!")
     return X, y, shape
+
+def load_timeseries(img_size):
+    ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    image_files = ts_dss + ts1_dss # Your list of files
+    
+    image_height = img_size[0]
+    image_width = img_size[1]
+
+    image_stack = np.empty((image_height, image_width, len(image_files))) # Create empty HxWxN array/matrix
+
+    for i, fname in enumerate(image_files):
+            # Extract band's data and transform into a numpy array
+            label_ds = gdal.Open(fname, gdal.GA_ReadOnly)
+            label_bands = label_ds.GetRasterBand(1).ReadAsArray()
+            image_stack[:, :, i] = label_bands # Set the i:th slice to this image
+    return image_files
+
 
 def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True):
     X = []
