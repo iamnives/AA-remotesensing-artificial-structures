@@ -10,12 +10,12 @@ SRC = DATA_FOLDER + "clipped/" + ROI
 SRC_FOLDER = SRC + "ts/"
 
 DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/tsalg/"
-imFilename = DST_FOLDER + "16clipped_pad_pad_ndvi.tif"
+imFilename = DST_FOLDER + "18clipped_pad_pad_ndvi.tif"
 
 rast_src = gdal.Open(imFilename, gdal.GA_Update)
 gt = rast_src.GetGeoTransform()
 gtl = list(gt)
-gtl[0] -= 5 # moves X axis - left + right
+gtl[0] -= 0 # moves X axis - left + right
 gtl[3] += 5  # moves Y axis - down + up
 rast_src.SetGeoTransform(tuple(gtl))
-rast_src = None
+rast_src = None # -0 +5

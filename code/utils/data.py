@@ -38,14 +38,14 @@ def reverse_class_map(u):
     }
     return np.array([text_classes[x] for x in u])
 
-def _class_map(x):
+def _class_map(x): # typed roads, 2,3,4,5,6
     if x == 4: return 2
     if x >= 1 and x <= 13:
         return 1
     elif x > 13 and x <= 42: 
-        return 3
+        return 7
     elif x > 42 and x <= 48:
-            return 4
+            return 8
     return 0
 
 def _class_map_binary(x):

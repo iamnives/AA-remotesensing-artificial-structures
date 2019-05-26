@@ -22,7 +22,7 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/puepi.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadstyped_align_classification.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
 start = time.time() 
 
