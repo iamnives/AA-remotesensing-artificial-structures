@@ -26,5 +26,5 @@ plt.xlabel('Sample number')
 plt.ylabel('Class')
 plt.show()
 
-ts = data.load_timeseries(img_size=(5003, 3875))
-print(ts.shape)
+# ts = data.load_timeseries(img_size=(5003, 3875))
+# print(ts.shape)

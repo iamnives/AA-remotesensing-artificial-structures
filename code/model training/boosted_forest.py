@@ -27,7 +27,7 @@ REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_
 start = time.time() 
 
 train_size = int(19386625*0.2)
-X, y, X_test , y_test  = data.load(train_size, normalize=False, balance=False) 
+X, y, X_test, y_test  = data.load(train_size, normalize=False, balance=False) 
 
 # Build a forest and compute the feature importances
 forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504, 

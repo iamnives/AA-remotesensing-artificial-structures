@@ -94,17 +94,22 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
 
-    if osm_roads:
-        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-        roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
-        y[roads == 4] = roads[roads == 4]
-
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
 
     if map_classes:
         y = np.array([maping_f(yi) for yi in tqdm(y)])
+
+    if osm_roads:
+        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+        roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
+        y[roads == 2] = roads[roads == 2]
+        y[roads == 3] = roads[roads == 3]
+        y[roads == 4] = roads[roads == 4]
+        y[roads == 5] = roads[roads == 5]
+        y[roads == 6] = roads[roads == 6] 
+
 
 
     print("Prediction data: Done!")
@@ -153,8 +158,6 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     y = labelBands[isTrain]
     roads = roads[isTrain]
 
-    if osm_roads:
-        y[roads == 4] = roads[roads == 4]
 
     # Get list of raster bands info as array, already indexed by labels non zero
     print("Datasets: Loading...")
@@ -175,6 +178,18 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
+
+    if map_classes:
+        print("Class Mapping: Loading...")
+        y = np.array([maping_f(yi) for yi in tqdm(y)])
+        print("Class Mapping: Done!      ")
+
+    if osm_roads:
+        y[roads == 2] = roads[roads == 2]
+        y[roads == 3] = roads[roads == 3]
+        y[roads == 4] = roads[roads == 4]
+        y[roads == 5] = roads[roads == 5]
+        y[roads == 6] = roads[roads == 6]
 
     # Split the dataset in two equal parts
     X_train, X_test, y_train, y_test = train_test_split(
@@ -200,11 +215,9 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         X_train, y_train = smt.fit_sample(X_train, y_train)
         print("Features array shape after balance: " + str(X_train.shape)) 
 
-    if map_classes:
-        print("Class Mapping: Loading...")
-        y_train = np.array([maping_f(yi) for yi in tqdm(y_train)])
-        y_test = np.array([maping_f(yi) for yi in tqdm(y_test)])
-        print("Class Mapping: Done!      ")
 
 
-    return X_train, y_train , X_test , y_test
+
+        
+
+    return X_train, y_train, X_test, y_test
