@@ -32,11 +32,11 @@ def test_pred():
 
     raster_ds = gdal.Open(DS_FOLDER + "/ignored/static/clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
     band = raster_ds.GetRasterBand(1).ReadAsArray()
-    # moving window average
 
-    filter_kernel = [[0, 0, 0],
-                    [0, 8, 0],
-                    [0, 0, 0]]
+    # Square average kernel gives box blur.
+    filter_kernel = [[-1, -1, -1],
+                    [-1, 8, -1],
+                    [-1, -1, -1]]
     band_convolved = scipy.signal.convolve2d(band, filter_kernel, mode='same', boundary='fill', fillvalue=0)
 
     viz.createGeotiff(DS_FOLDER + "/ignored/static/convolved.tif", band_convolved, DS_FOLDER + "/ignored/static/clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
