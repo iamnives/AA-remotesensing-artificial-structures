@@ -149,7 +149,7 @@ def load_timeseries(img_size):
     return image_files
 
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True, convole=False):
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True, convolve=False):
     X = []
 
     if(datafiles is None):
