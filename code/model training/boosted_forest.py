@@ -1,3 +1,8 @@
+"""
+Created on Sun Mar  3 21:42:16 2019
+
+@author: André Neves
+"""
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -5,12 +10,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import xgboost as xgb 
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
-from utils import data
 import matplotlib.pyplot as plt  
 import numpy as np
 from datetime import timedelta
+
 import time
 from utils import visualization as viz
+from utils import data
 
 import gdal
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
@@ -22,8 +28,13 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadsall_align_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadstyped_align_classification.tiff"
+OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadstyped_align_classification_proba.tiff"
+
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
+
+PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
+
 start = time.time() 
 
 train_size = int(19386625*0.2)
@@ -68,6 +79,12 @@ print(classification_report(y, y_pred))
 yr = y_pred.reshape(shape)
 
 viz.createGeotiff(OUT_RASTER, yr, REF_FILE , gdal.GDT_Byte)
+
+y_proba = forest.predict_proba(X)
+yr_proba = y_pred.reshape(shape)
+
+viz.createGeotiff(OUT_PROBA_RASTER, yr_proba, REF_FILE, gdal.GDT_Float32)
+
 
 end=time.time()
 elapsed=end-start
