@@ -51,7 +51,7 @@ def _class_map(x): # typed roads, 2,3,4,5,6
     if x >= 1 and x <= 13:
         return 1
     elif x > 13 and x <= 42: 
-        return 7
+        return 3
     elif x > 42 and x <= 48:
         return 4
     return 0
@@ -125,6 +125,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
 
     
 
+    
     print("Prediction data: Done!")
     return X, y, shape
 

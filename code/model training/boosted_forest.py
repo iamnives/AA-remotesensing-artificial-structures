@@ -10,12 +10,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import xgboost as xgb 
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
-from utils import data
 import matplotlib.pyplot as plt  
 import numpy as np
 from datetime import timedelta
+
 import time
 from utils import visualization as viz
+from utils import data
 
 import gdal
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
