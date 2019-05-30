@@ -32,7 +32,7 @@ TS1_FOLDER = DS_FOLDER + "t1stats/"
 OUT_RASTER = DS_FOLDER + "results/roads_test.tif"
 def test_pred():
     start = time.time()
-    _, y, pic_shape = data.load_prediction(ratio=1, normalize=False)
+    X, y, pic_shape = data.load_prediction(ratio=1, normalize=False)
 
     viz.createGeotiff(OUT_RASTER, y, DS_FOLDER + "ref.tif", gdal.GDT_UInt16)
 

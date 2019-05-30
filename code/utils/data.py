@@ -17,7 +17,7 @@ from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.combine import SMOTETomek
 from imblearn.ensemble import RUSBoostClassifier
 
-import scipy
+import scipy.signal
 
 from tqdm import tqdm
 
@@ -90,6 +90,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         test_ds = test_ds[:shape[0],:shape[1]]
 
         if convolve:
+            # Blur kernel
             filter_kernel = [[1/9, 1/9, 1/9],
                             [1/9, 1/9, 1/9],
                             [1/9, 1/9, 1/9]]
@@ -114,19 +115,15 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     if binary:
         maping_f = _class_map_binary
 
-    if map_classes:
-        y = np.array([maping_f(yi) for yi in tqdm(y)])
-
     if osm_roads:
         labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
         roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
-        y[roads == 2] = roads[roads == 2]
-        y[roads == 3] = roads[roads == 3]
         y[roads == 4] = roads[roads == 4]
-        y[roads == 5] = roads[roads == 5]
-        y[roads == 6] = roads[roads == 6] 
 
+    if map_classes:
+        y = np.array([maping_f(yi) for yi in tqdm(y)])
 
+    
 
     print("Prediction data: Done!")
     return X, y, shape
@@ -185,6 +182,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
             test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
 
             if convolve:
+                # This should do moving average
                 filter_kernel = [[1/9, 1/9, 1/9],
                                 [1/9, 1/9, 1/9],
                                 [1/9, 1/9, 1/9]]
@@ -203,17 +201,13 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     if binary:
         maping_f = _class_map_binary
 
+    if osm_roads:
+        y[roads == 4] = roads[roads == 4]
+
     if map_classes:
         print("Class Mapping: Loading...")
         y = np.array([maping_f(yi) for yi in tqdm(y)])
         print("Class Mapping: Done!      ")
-
-    if osm_roads:
-        y[roads == 2] = roads[roads == 2]
-        y[roads == 3] = roads[roads == 3]
-        y[roads == 4] = roads[roads == 4]
-        y[roads == 5] = roads[roads == 5]
-        y[roads == 6] = roads[roads == 6]
 
     # Split the dataset in two equal parts
     X_train, X_test, y_train, y_test = train_test_split(
