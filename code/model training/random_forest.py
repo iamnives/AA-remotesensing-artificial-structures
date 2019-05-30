@@ -24,7 +24,7 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/rf_20px_ts_s1_s2_idxfixed_roads_clean_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/rf_20px_ts_s1_s2_idxfixed_roadstyped_align_classification.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
 
 start = time.time()
@@ -52,7 +52,7 @@ dump(forest, '../sensing_data/models/forest.joblib')
 print("Saved model to disk")
 
 # Testing trash
-X, y, shape = data.load_prediction(ratio=0.5 ,normalize=False)
+X, y, shape = data.load_prediction(ratio=0.5, normalize=False)
 print(X.shape, y.shape)
 
 y_pred = forest.predict(X)
