@@ -15,13 +15,13 @@ DST_FOLDER =  "../sensing_data/" + "clipped/" + ROI + "ts/"
 
 
 def ndvi(nir, red, ref):
-	return (nir - red) / (nir + red)
+	return (nir - red) / (nir + red + 1) 
 
 def ndbi(swir, nir, ref):
-	return (swir - nir) / (swir + nir)
+	return (swir - nir) / (swir + nir + 1)
 
 def ndwi(green, nir, ref):
-	return (green - nir) / (green + nir)
+	return (green - nir) / (green + nir + 1)
 
 def evi(nir, red, ref, blue=None):
 	return 2.4*(nir - red) / (nir + 2.4*red + 10_000)

@@ -11,8 +11,7 @@ from osgeo import gdal, osr
 import numpy as np
 from timeit import default_timer as timer
 import os
- 
- 
+
 #inicialize data location
 DATA_FOLDER = "../sensing_data/raw/timeseries/"
 ROI = "vila-de-rei/"

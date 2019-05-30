@@ -24,13 +24,7 @@ plt.hist(y, bins=np.arange(y.min(), y.max()+2), align='left', color='c',  histty
 plt.xticks(np.arange(y.min(), y.max()+2))
 plt.xlabel('Sample number')
 plt.ylabel('Class')
-
-print(Xt.shape)
-fg = plt.figure(2)
-plt.title("Testing set class distribution")
-plt.hist(yt, bins=np.arange(yt.min(), yt.max()+2), align='left', color='c',  histtype='bar', ec='black')
-plt.xticks(np.arange(yt.min(), yt.max()+2))
-plt.xlabel('Sample number')
-plt.ylabel('Class')
-
 plt.show()
+
+# ts = data.load_timeseries(img_size=(5003, 3875))
+# print(ts.shape)

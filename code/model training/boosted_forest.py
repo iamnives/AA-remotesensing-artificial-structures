@@ -1,3 +1,8 @@
+"""
+Created on Sun Mar  3 21:42:16 2019
+
+@author: André Neves
+"""
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -22,7 +27,7 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadstyped_align_classification.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
 
 PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
@@ -30,7 +35,7 @@ PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_
 start = time.time() 
 
 train_size = int(19386625*0.2)
-X, y, X_test , y_test  = data.load(train_size, normalize=False, balance=False) 
+X, y, X_test, y_test  = data.load(train_size, normalize=False, balance=False) 
 
 # Build a forest and compute the feature importances
 forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504, 
@@ -56,7 +61,7 @@ print(confusion_matrix(y_test, y_pred))
 dump(forest, '../sensing_data/models/boosted.joblib')
 print("Saved model to disk")
 # Testing trash
-X, y, shape = data.load_prediction(ratio=0.5 ,normalize=False)
+X, y, shape = data.load_prediction(ratio=0.5, normalize=False)
  
 # reduce to half size maybe just for the lol
 print(X.shape, y.shape)

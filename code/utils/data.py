@@ -1,3 +1,9 @@
+"""
+Created on Sun Mar  3 21:42:16 2019
+
+@author: André Neves
+"""
+
 import os
 import sys
 
@@ -6,7 +12,6 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
-from imblearn.combine import SMOTETomek
 from imblearn.under_sampling import RandomUnderSampler, TomekLinks
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.combine import SMOTETomek
@@ -41,12 +46,12 @@ def reverse_class_map(u):
     }
     return np.array([text_classes[x] for x in u])
 
-def _class_map(x):
+def _class_map(x): # typed roads, 2,3,4,5,6
     if x == 4: return 2
     if x >= 1 and x <= 13:
         return 1
     elif x > 13 and x <= 42: 
-        return 3
+        return 7
     elif x > 42 and x <= 48:
         return 4
     return 0
@@ -105,11 +110,6 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
 
-    if osm_roads:
-        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-        roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
-        y[roads == 4] = roads[roads == 4]
-
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
@@ -117,11 +117,39 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     if map_classes:
         y = np.array([maping_f(yi) for yi in tqdm(y)])
 
+    if osm_roads:
+        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+        roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
+        y[roads == 2] = roads[roads == 2]
+        y[roads == 3] = roads[roads == 3]
+        y[roads == 4] = roads[roads == 4]
+        y[roads == 5] = roads[roads == 5]
+        y[roads == 6] = roads[roads == 6] 
+
+
 
     print("Prediction data: Done!")
     return X, y, shape
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True, convolve=False):
+def load_timeseries(img_size):
+    ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    image_files = ts_dss + ts1_dss # Your list of files
+    
+    image_height = img_size[0]
+    image_width = img_size[1]
+
+    image_stack = np.empty((image_height, image_width, len(image_files))) # Create empty HxWxN array/matrix
+
+    for i, fname in enumerate(image_files):
+            # Extract band's data and transform into a numpy array
+            label_ds = gdal.Open(fname, gdal.GA_ReadOnly)
+            label_bands = label_ds.GetRasterBand(1).ReadAsArray()
+            image_stack[:, :, i] = label_bands # Set the i:th slice to this image
+    return image_files
+
+
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True, convole=False):
     X = []
 
     if(datafiles is None):
@@ -146,8 +174,6 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     y = labelBands[isTrain]
     roads = roads[isTrain]
 
-    if osm_roads:
-        y[roads == 4] = roads[roads == 4]
 
     # Get list of raster bands info as array, already indexed by labels non zero
     print("Datasets: Loading...")
@@ -177,6 +203,18 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     if binary:
         maping_f = _class_map_binary
 
+    if map_classes:
+        print("Class Mapping: Loading...")
+        y = np.array([maping_f(yi) for yi in tqdm(y)])
+        print("Class Mapping: Done!      ")
+
+    if osm_roads:
+        y[roads == 2] = roads[roads == 2]
+        y[roads == 3] = roads[roads == 3]
+        y[roads == 4] = roads[roads == 4]
+        y[roads == 5] = roads[roads == 5]
+        y[roads == 6] = roads[roads == 6]
+
     # Split the dataset in two equal parts
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=(int(train_size*test_size)), train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
@@ -200,13 +238,5 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         smt = TomekLinks(sampling_strategy='not minority', n_jobs=4, random_state=42)
         X_train, y_train = smt.fit_sample(X_train, y_train)
         print("Features array shape after balance: " + str(X_train.shape)) 
-
-    if map_classes:
-        print("Class Mapping: Loading...")
-        y_train = np.array([maping_f(yi) for yi in tqdm(y_train)])
-        y_test = np.array([maping_f(yi) for yi in tqdm(y_test)])
-        print("Class Mapping: Done!      ")
-
-
-
-    return X_train, y_train , X_test , y_test
+        
+    return X_train, y_train, X_test, y_test
