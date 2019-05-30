@@ -12,6 +12,8 @@ from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.combine import SMOTETomek
 from imblearn.ensemble import RUSBoostClassifier
 
+import scipy
+
 from tqdm import tqdm
 
 #inicialize data location
@@ -46,7 +48,7 @@ def _class_map(x):
     elif x > 13 and x <= 42: 
         return 3
     elif x > 42 and x <= 48:
-            return 4
+        return 4
     return 0
 
 def _class_map_binary(x):
@@ -61,7 +63,7 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=True):
+def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=True, convolve=False):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos_50982.tif" not in f) and ("xml" not in f) and ("_" in f)]
     ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -80,7 +82,15 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
         # Extract band's data and transform into a numpy array
         test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
-        X.append(test_ds[:shape[0],:shape[1]].flatten())
+        test_ds = test_ds[:shape[0],:shape[1]]
+
+        if convolve:
+            filter_kernel = [[1/9, 1/9, 1/9],
+                            [1/9, 1/9, 1/9],
+                            [1/9, 1/9, 1/9]]
+            test_ds = scipy.signal.convolve2d(test_ds, filter_kernel, mode='same', boundary='fill', fillvalue=0)      
+
+        X.append(test_ds.flatten())
 
     # Transpose attributes matrix
     X = np.dstack(tuple(X))[0]
@@ -111,7 +121,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     print("Prediction data: Done!")
     return X, y, shape
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True):
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=True, convolve=False):
     X = []
 
     if(datafiles is None):
@@ -147,6 +157,14 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
             rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
             # Extract band's data and transform into a numpy array
             test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
+
+            if convolve:
+                filter_kernel = [[1/9, 1/9, 1/9],
+                                [1/9, 1/9, 1/9],
+                                [1/9, 1/9, 1/9]]
+
+                test_ds = scipy.signal.convolve2d(test_ds, filter_kernel, mode='same', boundary='fill', fillvalue=0)
+
             X.append(test_ds[isTrain])
     
     # Transpose attributes matrix
@@ -188,6 +206,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         y_train = np.array([maping_f(yi) for yi in tqdm(y_train)])
         y_test = np.array([maping_f(yi) for yi in tqdm(y_test)])
         print("Class Mapping: Done!      ")
+
 
 
     return X_train, y_train , X_test , y_test

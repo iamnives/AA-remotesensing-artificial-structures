@@ -24,6 +24,9 @@ ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
+
+PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
+
 start = time.time() 
 
 train_size = int(19386625*0.2)
@@ -38,7 +41,7 @@ forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504,
                         min_child_weight=1,
                         n_estimators=1500,
                         n_jobs=4,
-                        objective='binary:hinge', # binary:hinge if binary classification
+                        objective='multi:softmax', # binary:hinge if binary classification
                         predictor='gpu_predictor', 
                         tree_method='gpu_hist')
 
