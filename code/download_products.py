@@ -23,7 +23,7 @@ if __name__ == '__main__':
     start = datetime(2016, 1, 1)
     end = datetime(2016, 12, 31)
     it = end + timedelta(days=1)
-    os.chdir('D:\\AA-remotesensing-artificial-structures\\sensing_data\\raw\\timeseries\\s1')
+    os.chdir('D:\\AA-remotesensing-artificial-structures\\sensing_data\\raw\\timeseries\\lisboa-setubal\\s2')
     while it.date() != start.date():
         it -= timedelta(days=1)
         completedir = glob.glob('*' + it.date().strftime("%Y%m%d") + '*')
@@ -50,10 +50,10 @@ if __name__ == '__main__':
                     #api.download_all(products)
                     #download(api, products)
                     if count == 1:
-                        nome = dataframe.get_values()
+                        nome = dataframe.get_values()[0][0]
                         p = multiprocessing.Process(target=foo, name="Foo", args=(api,products))
                         p.start()
-                        print("A aguardar download de " + nome + ".zip")
+                        print("A aguardar download de " + str(nome) + ".zip")
                         p.join(60 * 60)#60*60 = 1h
                         if p.is_alive():
                             print("Demorou tempo demais. Voltar a tentar...")

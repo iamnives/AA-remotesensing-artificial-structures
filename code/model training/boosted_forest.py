@@ -28,8 +28,8 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadstyped_align_classification.tiff"
-OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roadstyped_align_classification_proba.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roads_truealign_classification.tiff"
+OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roads_truealign_classification_proba.tiff"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
 
@@ -78,13 +78,7 @@ print(classification_report(y, y_pred))
 
 yr = y_pred.reshape(shape)
 
-viz.createGeotiff(OUT_RASTER, yr, REF_FILE , gdal.GDT_Byte)
-
-y_proba = forest.predict_proba(X)
-yr_proba = y_pred.reshape(shape)
-
-viz.createGeotiff(OUT_PROBA_RASTER, yr_proba, REF_FILE, gdal.GDT_Float32)
-
+viz.createGeotiff(OUT_RASTER, yr, REF_FILE, gdal.GDT_Byte)
 
 end=time.time()
 elapsed=end-start
