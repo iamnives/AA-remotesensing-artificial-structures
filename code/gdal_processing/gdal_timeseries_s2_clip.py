@@ -25,13 +25,7 @@ def main(argv):
             if ".xml" not in f1:
                 #gdal.Warp(DST_FOLDER + str(idx) + 'clipped_' + f1.split(".")[
                 #          0] + ".tif", f + "/" + f1, dstSRS="EPSG:32629", resampleAlg="lanczos", format="GTiff", xRes=10, yRes=10, cutlineDSName=MASK, cropToCutline=1)
-                gdal.Translate(DST_FOLDER + str(idx) + 'clipped_' + f1.split(".")[0] + ".tif", f + "/" + f1, 
-                                outputSRS="EPSG:32629", resampleAlg="lanczos", format="GTiff", xRes=10, yRes=10,
-                                # xmin, xmax, ymin, ymax
-                                # 547750.0684042358,597778.9019481323,4358364.243891101,4397110.3509889105
-                                projWin=[547750.0684042358, 4397110.3509889105, 597778.9019481323, 4358364.243891101], 
-                                projWinSRS="EPSG:32629")
-
+                gdal.Translate(DST_FOLDER + str(idx) + 'clipped_' + f1.split(".")[0] + ".tif", f + "/" + f1, outputSRS="EPSG:32629", resampleAlg="average", format="GTiff", xRes=10, yRes=10,projWin=[547750.0684042358, 4397110.3509889105, 597778.9019481323, 4358364.243891101], projWinSRS="EPSG:32629")
 
 if __name__ == "__main__":
     main(sys.argv)

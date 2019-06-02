@@ -26,8 +26,8 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-TS_FOLDER = DS_FOLDER + "tstats/"
-TS1_FOLDER = DS_FOLDER + "t1stats/"
+TS_FOLDER = DS_FOLDER + "tstats-20/"
+TS1_FOLDER = DS_FOLDER + "t1stats-20/"
 
 # Class to text for plotting features
 def feature_map(u):
@@ -78,7 +78,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     src_dss.sort()
     X = []
     
-    refDs = gdal.Open(DS_FOLDER + "/ignored/static/clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
+    refDs = gdal.Open(DS_FOLDER + "/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
     shape = tuple([int(ratio*i) for i in band.shape])
     
@@ -108,7 +108,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         normalizer = preprocessing.Normalizer().fit(X)
         X = normalizer.transform(X)  
 
-    labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+    labelDS = gdal.Open(DS_FOLDER + "clipped_20_cos_50982.tif", gdal.GA_ReadOnly)
     y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
 
     maping_f = _class_map
@@ -116,16 +116,13 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         maping_f = _class_map_binary
 
     if osm_roads:
-        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+        labelDS = gdal.Open(DS_FOLDER + "roads_20_cos_50982.tif", gdal.GA_ReadOnly)
         roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
         y[roads == 4] = roads[roads == 4]
 
     if map_classes:
         y = np.array([maping_f(yi) for yi in tqdm(y)])
 
-    
-
-    
     print("Prediction data: Done!")
     return X, y, shape
 
@@ -160,10 +157,10 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     src_dss.sort()
 
     # Extract band's data and transform into a numpy array
-    labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-    labelBands = labelDS.GetRasterBand(1).ReadAsArray()
-
-    labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    labelDS = gdal.Open(DS_FOLDER + "clipped_20_cos_50982.tif", gdal.GA_ReadOnly)
+    labelBands = labelDS.GetRasterBand(1).ReadAsArray()[:1937, :]
+    print(labelBands.shape)
+    labelDS = gdal.Open(DS_FOLDER + "roads_20_cos_50982.tif", gdal.GA_ReadOnly)
     roads = labelDS.GetRasterBand(1).ReadAsArray()
 
     # Prepare training data (set of pixels used for training) and labels

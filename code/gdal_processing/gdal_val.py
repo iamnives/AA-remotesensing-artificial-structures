@@ -13,7 +13,7 @@ from utils import visualization as viz
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
-SRC_FOLDER = SRC + "ts/"
+SRC_FOLDER = SRC + "ts1-20/"
 
 
 def main(argv):
@@ -21,7 +21,7 @@ def main(argv):
     src_dss = [f for f in os.listdir(SRC_FOLDER) if (
         ".jp2" in f) or (".tif" in f) or (".img" in f)]
     src_dss.sort()
-    ref_shape = (3875, 5003)
+    ref_shape = (1939, 2501)
     # Reference files
     for f in tqdm(src_dss):
         refDs = gdal.Open(SRC_FOLDER + f, gdal.GA_ReadOnly)

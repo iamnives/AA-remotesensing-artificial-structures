@@ -15,9 +15,9 @@ from utils import visualization as viz
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
-SRC_FOLDER = SRC +  "ts1/"
+SRC_FOLDER = SRC +  "ts1-20/"
  
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/t1stats/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/t1stats-20/"
 
 def main(argv):
 	bands ={
@@ -35,7 +35,7 @@ def main(argv):
 		except KeyError:
 			print("ignoring")
 
-	refDs = gdal.Open("../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
+	refDs = gdal.Open("../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GA_ReadOnly)
 	band = refDs.GetRasterBand(1).ReadAsArray()
 	ref_shape = band.shape
 
@@ -62,13 +62,13 @@ def main(argv):
 		std = np.std(timeseries, axis=0) # standard dev
 		variance = np.sqrt(std) # variance
 
-		viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts, "../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0, "../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,"../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,  "../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,  "../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4, "../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-		viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,  "../sensing_data/clipped/vila-de-rei/ignored/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts, "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0, "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,"../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,  "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,  "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4, "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
+		viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,  "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", gdal.GDT_Float32)
 		
 
 # np.mean(a, axis=0), np.quantile(a, 0.25, axis=0),

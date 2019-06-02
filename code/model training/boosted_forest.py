@@ -28,12 +28,10 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roads_truealign_classification.tiff"
-OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roads_truealign_classification_proba.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roads_truealign_20m_classification.tiff"
+OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idxfixed_roads_truealign_20m_classification_proba.tiff"
 
-REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
-
-PROBA_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/boosted_20px_ts_s1_s2_idx_roads_clean_classification.tiff"
+REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B08_20.vrt"
 
 start = time.time() 
 
@@ -64,9 +62,9 @@ print(confusion_matrix(y_test, y_pred))
 dump(forest, '../sensing_data/models/boosted.joblib')
 print("Saved model to disk")
 # Testing trash
-X, y, shape = data.load_prediction(ratio=0.5, normalize=False)
+X, y, shape = data.load_prediction(ratio=1, normalize=False)
  
-# reduce to half size maybe just for the lol
+# reduce to half size maybe 
 print(X.shape, y.shape)
 
 forest.get_booster().set_param('predictor', 'cpu_predictor')

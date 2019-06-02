@@ -11,7 +11,7 @@ from tqdm import tqdm
 #inicialize data location
 ROI = "vila-de-rei/"
 SRC_FOLDER = "../sensing_data/" + "clipped/" + ROI + "ts/"
-DST_FOLDER =  "../sensing_data/" + "clipped/" + ROI + "ts/"
+DST_FOLDER =  "../sensing_data/" + "clipped/" + ROI + "ts-/"
 
 
 def ndvi(nir, red, ref):
