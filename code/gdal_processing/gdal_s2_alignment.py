@@ -118,7 +118,7 @@ def align_all_images(folder):
             file_path = subdir+'/'+file
             
             if file.endswith(".tif") or file.endswith(".jp2"):
-                align_image(refImage_10m_path,file_path, warp_matrix, subdir+"/aligned_"+file)
+                align_image(refImage_10m_path, file_path, warp_matrix, subdir+"/aligned_"+file)
               
 
 
