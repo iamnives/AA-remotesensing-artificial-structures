@@ -23,6 +23,7 @@ SRC = SRC_FOLDER + "timeseries/"
 GT_SRC = SRC_FOLDER + "GT/"
 COS_SRC = DATA_FOLDER + "clipped/" + ROI
 
+
 def plot_confusion_matrix(y_true, y_pred, classes,
                           normalize=True,
                           title=None,
@@ -75,6 +76,7 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     plt.savefig(title+'.pdf')
     return ax
 
+
 def scl_map(x_elem):
     """Maps one element from x to the given class on our standard
 
@@ -90,6 +92,40 @@ def scl_map(x_elem):
     if x_elem == 6:
         return 4
     return 5  # anomalies or noclass
+
+
+def reverse_scl_map(x_elem):
+    """Maps one element from x to the given class on SCL standart
+
+    Parameters:
+        x_elem (int): class value from the classification
+    Returns:
+        int: class number in the SCL format
+   """
+    if x_elem == 2:
+        return 1
+    if x_elem == 3:
+        return 2
+    if x_elem == 4:
+        return 3
+    return x_elem  # no mapping needed
+
+
+def scl_gt_map(x_elem):
+    """Maps one element from SCL to the given class on SCL ranged from 1 to 4
+
+    Parameters:
+        x_elem (int): class value from the classification
+    Returns:
+        int: class number in the SCL format
+   """
+    if x_elem == 3:
+        return 2
+    if x_elem == 4:
+        return 3
+    if x_elem == 5:
+        return 4
+    return x_elem  # else no mapping needed
 
 
 def main(argv):
@@ -134,6 +170,7 @@ def main(argv):
     roads = roads[:cos_20.shape[0], :cos_20.shape[1]]
     cos_20[roads == 4] = roads[roads == 4]
 
+    print("Mapping cos...")
     cos = np.array([data._class_map(yi)
                     for yi in tqdm(cos.flatten())]).reshape((1937, 2501))
     cos_20 = np.array([data._class_map(yi)
@@ -143,22 +180,44 @@ def main(argv):
     print(result_10m.shape, result_20m.shape, gt.shape,
           gt_20m.shape, cos.shape, cos_20.shape)
 
-    print("10m result matrix")
-    print(confusion_matrix(result_10m.flatten(), cos.flatten()))
-    print("20m result matrix:")
-    print(confusion_matrix(result_20m.flatten(), cos_20.flatten()))
-
+    print("Mapping scl...")
     gt = np.array([scl_map(yi)
                    for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
     gt_20m = np.array([scl_map(yi)
                        for yi in tqdm(gt_20m.flatten())]).reshape((1937, 2501))
 
-    print("10m scl matrix")
-    print(confusion_matrix(gt.flatten(), cos.flatten()))
-    print("20m scl matrix:")
-    print(confusion_matrix(gt_20m.flatten(), cos_20.flatten()))
+    classes = ["NON_VEGETATED", "VEGETATION", "WATER", "SCL Anomaly"]
+    classes_cos = ["NON_VEGETATED", "ROAD", "VEGETATION", "WATER"]
+    classes_scl = ["NON_VEGETATED", "ROAD", "VEGETATION", "WATER", "SCL Anomaly"]
 
+    plot_confusion_matrix(cos.flatten(), gt.flatten(), classes=classes_scl,
+                          normalize=True, title="SentinelSCL-COS 10m Normalized confusion matrix")
+    plot_confusion_matrix(cos_20.flatten(), gt_20m.flatten(), classes=classes_scl,
+                          normalize=True, title="SentinelSCL-COS 20m Normalized confusion matrix")
 
+    plot_confusion_matrix(cos.flatten(), result_10m.flatten(
+    ), classes=classes_cos, normalize=True, title="XGBoost-COS 10m Normalized confusion matrix")
+    plot_confusion_matrix(cos.flatten(), result_20m.flatten(
+    ), classes=classes_cos, normalize=True, title="XGBoost-COS 20m Normalized confusion matrix")
+
+    print("Mapping results...")
+    result_10_mapped = np.array(
+        [reverse_scl_map(yi) for yi in tqdm(result_10m.flatten())]).reshape((1937, 2501))
+
+    result_20_mapped = np.array(
+        [reverse_scl_map(yi) for yi in tqdm(result_20m.flatten())]).reshape((1937, 2501))
+
+    print("Re-mapping scl...")
+    gt_mapped = np.array(
+        [scl_gt_map(yi) for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
+
+    gt_20_mapped = np.array(
+        [scl_gt_map(yi) for yi in tqdm(gt_20m.flatten())]).reshape((1937, 2501))
+
+    plot_confusion_matrix(gt_mapped.flatten(), result_10_mapped.flatten(
+    ), classes=classes, normalize=True, title="XGBoost-SentinelSCL 10m Normalized confusion matrix")
+    plot_confusion_matrix(gt_20_mapped.flatten(), result_20_mapped.flatten(
+    ), classes=classes, normalize=True, title="XGBoost-SentinelSCL 20m Normalized confusion matrix")
 
 
 if __name__ == "__main__":
