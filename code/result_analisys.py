@@ -10,7 +10,8 @@ from utils import data
 import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
-from pandas_ml import ConfusionMatrix
+import matplotlib
+import matplotlib.pyplot as plt
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -22,6 +23,57 @@ SRC = SRC_FOLDER + "timeseries/"
 GT_SRC = SRC_FOLDER + "GT/"
 COS_SRC = DATA_FOLDER + "clipped/" + ROI
 
+def plot_confusion_matrix(y_true, y_pred, classes,
+                          normalize=True,
+                          title=None,
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting normalize=True.
+    """
+    if not title:
+        if normalize:
+            title = 'Normalized confusion matrix'
+        else:
+            title = 'Confusion matrix, without normalization'
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+
+    # Only use the labels that appear in the data
+    #classes = classes[unique_labels(y_true, y_pred)]
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    fig, ax = plt.subplots(figsize=(11, 10))
+    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    #ax.figure.colorbar(im, ax=ax)
+    # We want to show all ticks...
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           # ... and label them with the respective list entries
+           xticklabels=classes, yticklabels=classes,
+           ylabel='True label',
+           xlabel='Predicted label')
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black")
+    fig.tight_layout()
+    plt.savefig(title+'.pdf')
+    return ax
 
 def scl_map(x_elem):
     """Maps one element from x to the given class on our standard
@@ -106,8 +158,7 @@ def main(argv):
     print("20m scl matrix:")
     print(confusion_matrix(gt_20m.flatten(), cos_20.flatten()))
 
-    cm = ConfusionMatrix(result_10m.flatten(), cos.flatten())
-    print(cm)
+
 
 
 if __name__ == "__main__":
