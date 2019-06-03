@@ -72,7 +72,7 @@ def main(argv):
     roads = roads.GetRasterBand(1).ReadAsArray()
     roads = roads[:result_10m.shape[0], :result_10m.shape[1]]
     cos[roads == 4] = roads[roads == 4]
- 
+
     cos_20 = gdal.Open(COS_SRC + "clipped_20_cos_50982.tif", gdal.GA_ReadOnly)
     cos_20 = cos_20.GetRasterBand(1).ReadAsArray()
     cos_20 = cos_20[:result_10m.shape[0], :result_10m.shape[1]]
@@ -97,9 +97,9 @@ def main(argv):
     print(confusion_matrix(result_20m.flatten(), cos_20.flatten()))
 
     gt = np.array([scl_map(yi)
-                    for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
+                   for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
     gt_20m = np.array([scl_map(yi)
-                        for yi in tqdm(gt_20m.flatten())]).reshape((1937, 2501))
+                       for yi in tqdm(gt_20m.flatten())]).reshape((1937, 2501))
 
     print("10m scl matrix")
     print(confusion_matrix(gt.flatten(), cos.flatten()))
@@ -108,6 +108,7 @@ def main(argv):
 
     cm = ConfusionMatrix(result_10m.flatten(), cos.flatten())
     print(cm)
+
 
 if __name__ == "__main__":
     main(sys.argv)
