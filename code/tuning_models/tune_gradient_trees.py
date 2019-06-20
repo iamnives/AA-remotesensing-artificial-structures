@@ -25,10 +25,11 @@ def model(dfs):
     start = time.time()
     train_size = int(19386625*0.05)
     X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False)
+        train_size, normalize=False, balance=False, osm_roads=True)
 
+    print(f'Tuning on {X_train.shape}')
     xgb_model = xgb.XGBClassifier()
-    # brute force scan for all parameters, here are the tricks
+    # brute force scan for all parameters
     # usually max_depth is 6,7,8
     # learning rate is around 0.05, but small changes may make big diff
     # tuning min_child_weight subsample colsample_bytree can have
@@ -42,17 +43,18 @@ def model(dfs):
                   'gpu_id': [0],
                   'objective': ['multi:softmax'],
                   # params tuning
-                  'learning_rate': uniform(),  # `eta` value
-                  'max_depth': [5, 6, 8],
+                  'learning_rate': uniform(0.001,0.3),  # `eta` value
+                  'max_depth': [3, 5, 6, 8],
                   'min_child_weight': [1, 3, 5],
-                  "gamma": uniform(),
-                  'colsample_bytree': uniform(),
+                  "gamma": [0, 1, 5],
+                  'colsample_bytree': uniform(0.7,0.9),
                   'n_estimators': n_trees,
+                  'max_delta_step': uniform(1,10),
                   'verbose': [1]}
 
     kappa_scorer = make_scorer(cohen_kappa_score)
     gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={
-                            'recall_macro'}, refit='recall_macro', return_train_score=False,  n_iter=50, verbose=2)
+                            'recall_macro'}, refit='recall_macro', return_train_score=False, n_iter=25, verbose=1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")
@@ -72,7 +74,7 @@ def model(dfs):
     elapsed = end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
 
-    viz.plot_confusionmx(matrix)
+    #viz.plot_confusionmx(matrix)
     #viz.plot_gridcv(gs.cv_results_, ["kappa"], "n_estimators", 500, 2000)
 
 

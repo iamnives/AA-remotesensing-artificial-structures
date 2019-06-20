@@ -19,22 +19,21 @@ import xgboost as xgb
 
 start = time.time()
 
-train_size = 200_000
-X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=False) 
+train_size = int(19386625*0.2)
+X, y, X_test , y_test  = data.load(train_size, normalize=False, balance=False, osm_roads=True) 
 
 # Build a forest and compute the feature importances
 forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504, 
-                           gamma=0.1, 
-                           gpu_id=0, 
-                           learning_rate=0.6783980222181293,
-                           max_depth=6,
-                           min_child_weight=1,
-                           n_estimators=1500,
-                           nthread=4,
-                           objective='multi:softmax', 
-                           predictor='gpu_predictor', 
-                           tree_method='gpu_hist', 
-                           verbose=2)
+                        gamma=0.1, 
+                        gpu_id=0, 
+                        learning_rate=0.6783980222181293,
+                        max_depth=6,
+                        min_child_weight=1,
+                        n_estimators=1500,
+                        n_jobs=4,
+                        objective='multi:softmax', # binary:hinge if binary classification
+                        predictor='gpu_predictor', 
+                        tree_method='gpu_hist')
 
 forest.fit(X, y)
 importances = forest.feature_importances_

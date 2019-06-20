@@ -1,0 +1,18 @@
+[Parallel(n_jobs=4)]: Done 500 out of 500 | elapsed: 58.4min finished
+Best parameters set found on development set:
+
+{'alpha': 0.1443409254908301, 'class_weight': 'balanced', 'early_stopping': True, 'l1_ratio': 0.24136127968572874, 'loss': 'perceptron', 'max_iter': 1000, 'penalty': 'l2', 'tol': 0.001}
+
+Kappa: 0.4964867447845691
+              precision    recall  f1-score   support
+
+           1       0.52      0.50      0.51      7188
+           2       0.33      0.08      0.13      8139
+           3       0.95      0.97      0.96    174702
+           4       0.62      0.95      0.75      3837
+
+   micro avg       0.92      0.92      0.92    193866
+   macro avg       0.60      0.63      0.59    193866
+weighted avg       0.90      0.92      0.90    193866
+
+Run time: 1:07:05.100495

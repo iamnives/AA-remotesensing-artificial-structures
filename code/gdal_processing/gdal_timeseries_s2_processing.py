@@ -13,9 +13,9 @@ from utils import visualization as viz
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
-SRC_FOLDER = SRC + "ts-20/"
+SRC_FOLDER = SRC + "ts/"
 
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/tstats-20/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/tstats/"
 
 
 def main(argv):

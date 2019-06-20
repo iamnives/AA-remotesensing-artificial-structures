@@ -15,14 +15,15 @@ from utils import visualization as viz
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
-SRC_FOLDER = SRC +  "ts1-20/"
+SRC_FOLDER = SRC +  "ts1/"
  
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/t1stats-20/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/t1stats/"
 
 def main(argv):
 	bands ={
 	"VV": [],
 	"VH": [],
+	"VV/VH": []
 	}
 
 	src_dss = [f for f in os.listdir(SRC_FOLDER) if (".jp2" in f) or (".tif" in f) or (".img" in f)]

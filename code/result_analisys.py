@@ -76,7 +76,6 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     plt.savefig(title+'.pdf')
     return ax
 
-
 def scl_map(x_elem):
     """Maps one element from x to the given class on our standard
 
@@ -92,7 +91,6 @@ def scl_map(x_elem):
     if x_elem == 6:
         return 4
     return 5  # anomalies or noclass
-
 
 def reverse_scl_map(x_elem):
     """Maps one element from x to the given class on SCL standart
@@ -110,7 +108,6 @@ def reverse_scl_map(x_elem):
         return 3
     return x_elem  # no mapping needed
 
-
 def scl_gt_map(x_elem):
     """Maps one element from SCL to the given class on SCL ranged from 1 to 4
 
@@ -127,6 +124,24 @@ def scl_gt_map(x_elem):
         return 4
     return x_elem  # else no mapping needed
 
+def ghsl_map(x_elem):
+    """Maps one element from GHSL to the given class on our standart ranged from 1 to 4
+
+    Parameters:
+        x_elem (int): class value from the classification
+    Returns:
+        int: class number in the SCL format
+   """
+    if x_elem == 1:
+        return 4
+    if x_elem == 2:
+        return 3
+    return 1  # else its structure
+
+def ghsl_map_cos(x): # typed roads, 2,3,4,5,6
+    if x == 2:
+        return 1
+    return x
 
 def main(argv):
     """Runs main code for result analysis
@@ -170,7 +185,17 @@ def main(argv):
     roads = roads[:cos_20.shape[0], :cos_20.shape[1]]
     cos_20[roads == 4] = roads[roads == 4]
 
+    ghsl_10m = gdal.Open(SRC + "gshl.tif", gdal.GA_ReadOnly)
+    ghsl_10m = ghsl_10m.GetRasterBand(1).ReadAsArray()
+    ghsl_10m = ghsl_10m[:result_10m.shape[0], :result_10m.shape[1]]
+
+    print("Mapping GHSL...")
+    
+    ghsl_10m_mapped = np.array([ghsl_map(yi)
+                    for yi in tqdm(ghsl_10m.flatten())]).reshape((1937, 2501))
+
     print("Mapping cos...")
+    
     cos = np.array([data._class_map(yi)
                     for yi in tqdm(cos.flatten())]).reshape((1937, 2501))
     cos_20 = np.array([data._class_map(yi)
@@ -219,6 +244,15 @@ def main(argv):
     plot_confusion_matrix(gt_20_mapped.flatten(), result_20_mapped.flatten(
     ), classes=classes, normalize=True, title="XGBoost-SentinelSCL 20m Normalized confusion matrix")
 
+    plot_confusion_matrix(cos.flatten(), ghsl_10m_mapped.flatten(
+    ), classes=classes_cos, normalize=True, title="GHSL-Cos 10m Normalized confusion matrix")
+
+    cos = np.array([ghsl_map_cos(yi)
+                    for yi in tqdm(cos.flatten())]).reshape((1937, 2501))
+
+    kappa = cohen_kappa_score(cos.flatten(), ghsl_10m_mapped.flatten())
+    print(f'Kappa: {kappa}')
+    print(classification_report(cos.flatten(), ghsl_10m_mapped.flatten()))
 
 if __name__ == "__main__":
     main(sys.argv)

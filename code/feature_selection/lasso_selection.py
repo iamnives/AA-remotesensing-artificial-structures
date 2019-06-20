@@ -11,8 +11,8 @@ from sklearn.feature_selection import SelectFromModel
 from utils import data
 from sklearn.model_selection import GridSearchCV
 
-sample_size = 100_000
-X, y, _ , _s = data.load(sample_size, normalize=False, balance=True) 
+sample_size = int(19386625*0.2)
+X, y, _ , _s = data.load(sample_size, normalize=True, balance=False, osm_roads=True) 
 
 alphas = np.geomspace(0.1,1)
 clf = LassoCV(alphas=alphas, cv=10)

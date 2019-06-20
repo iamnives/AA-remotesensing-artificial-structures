@@ -24,14 +24,14 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/rf_20px_ts_s1_s2_idxfixed_roadstyped_align_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + "/timeseries/test.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI  + "/ignored/static/clipped_sentinel2_B03.vrt"
 
-start = time.time()
 
 train_size = int(19386625*0.2)
 X, y, X_test , y_test  = data.load(train_size, normalize=False, balance=False) 
 
+start = time.time()
 # Build a forest and compute the feature importances
 forest = RandomForestClassifier(n_estimators=500,
                             min_samples_leaf=4, 
@@ -47,6 +47,10 @@ kappa = cohen_kappa_score(y_test, y_pred)
 print(f'Kappa: {kappa}')
 print(classification_report(y_test, y_pred))
 print(confusion_matrix(y_test, y_pred))
+
+end=time.time()
+elapsed=end-start
+print("Training time: " + str(timedelta(seconds=elapsed)))
 
 dump(forest, '../sensing_data/models/forest.joblib')
 print("Saved model to disk")
@@ -69,4 +73,4 @@ viz.createGeotiff(OUT_RASTER, yr, REF_FILE + "clipped_sentinel2_B03.vrt", gdal.G
 
 end=time.time()
 elapsed=end-start
-print("Run time: " + str(timedelta(seconds=elapsed)))
+print("Total run time: " + str(timedelta(seconds=elapsed)))

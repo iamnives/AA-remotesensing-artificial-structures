@@ -25,7 +25,7 @@ import time
 def model(dfs):
   start = time.time()
   train_size = 100_000
-  X_train, y_train, X_test , y_test = data.load(train_size, datafiles=dfs ,normalize=True, balance=False) 
+  X_train, y_train, X_test , y_test = data.load(train_size, datafiles=dfs, normalize=False, balance=False, osm_roads=True) 
 
   N_s = [500,1000,1500, 2000]
   min_samples_leaf = [1,2,4]
