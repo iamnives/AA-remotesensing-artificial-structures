@@ -22,11 +22,12 @@ from sklearn.model_selection import GridSearchCV
 
 
 def model(dfs):
-    start = time.time()
+    
     train_size = int(19386625*0.05)
     X_train, y_train, X_test, y_test = data.load(
         train_size, normalize=False, balance=False, osm_roads=True)
-
+        
+    start = time.time()
     print(f'Tuning on {X_train.shape}')
     xgb_model = xgb.XGBClassifier()
     # brute force scan for all parameters

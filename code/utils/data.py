@@ -31,11 +31,12 @@ TS1_FOLDER = DS_FOLDER + "t1stats/"
 
 # Class to text for plotting features
 def feature_map(u):
-    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
-    ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
-    ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    src_dss = [f for f in os.listdir(DS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    ts_dss = [f for f in os.listdir(TS_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
+    ts1_dss = [f for f in os.listdir(TS1_FOLDER) if ("cos" not in f) and ("xml" not in f) and ("_" in f)]
 
     src_dss = src_dss + ts_dss + ts1_dss
+    src_dss.sort()
     text_classes = dict(zip(range(len(src_dss)), src_dss))
     return np.array([text_classes[x] for x in u])
 
@@ -123,7 +124,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         maping_f = _class_map_binary
 
     if osm_roads:
-        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982_notrack.tif", gdal.GA_ReadOnly)
+        labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
         roads = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0],:shape[1]].flatten()
         y[roads == 4] = roads[roads == 4]
 
@@ -166,7 +167,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     # Extract band's data and transform into a numpy array
     labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     labelBands = labelDS.GetRasterBand(1).ReadAsArray()[:, :]
-    labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982_notrack.tif", gdal.GA_ReadOnly)
+    labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
     roads = labelDS.GetRasterBand(1).ReadAsArray()
 
     # Prepare training data (set of pixels used for training) and labels
