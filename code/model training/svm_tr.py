@@ -20,45 +20,64 @@ from sklearn import svm
 
 from joblib import dump, load
 
-#inicialize data location
+# inicialize data location
 DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
+
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
-OUT_RASTER = DATA_FOLDER + "results/" + ROI + "svm_100k_ts_classification.tiff"
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
+    "/timeseries/svm_100k_ts_s2_idx_roadstrack_align_classification.tiff"
 
-start = time.time()
+OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
+    "/timeseries/svm_100k_ts_s2_idx_roadstrack_align_classification_proba_"
 
-train_size = 100_000
-X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=False) 
+REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
+    "/ignored/static/clipped_sentinel2_B08.vrt"
 
-# Build a sv and compute the feature importances
-sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734)
 
-sv.fit(X, y)
-y_pred = sv.predict(X_test)
+def main(argv):
+    real_start = time.time()
 
-kappa = cohen_kappa_score(y_test, y_pred)
-print(f'Kappa: {kappa}')
-print(classification_report(y_test, y_pred))
+    train_size = 100_000
+    X, y, X_test , y_test  = data.load(train_size, normalize=True, balance=False) 
 
-dump(sv, '../sensing_data/models/svm.joblib')
-print("Saved model to disk")
-# Testing trash
-X, y, shape = data.load_prediction(DS_FOLDER, normalize=True)
-print(X.shape, y.shape)
+    start = time.time()
+    # Build a sv and compute the feature importances
+    sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734)
 
-y_pred = sv.predict(X)
+    print("Fitting data...")
+    sv.fit(X, y)
 
-print(X.shape, y.shape)
+    end = time.time()
+    elapsed = end-start
+    print("Training time: " + str(timedelta(seconds=elapsed)))
+    
+    y_pred = sv.predict(X_test)
 
-kappa = cohen_kappa_score(y, y_pred)
-print(f'Kappa: {kappa}')
-print(classification_report(y, y_pred))
+    kappa = cohen_kappa_score(y_test, y_pred)
+    print(f'Kappa: {kappa}')
+    print(classification_report(y_test, y_pred))
 
-yr = y_pred.reshape(shape)
+    dump(sv, '../sensing_data/models/svm.joblib')
+    print("Saved model to disk")
+    # Testing trash
+    X, y, shape = data.load_prediction(DS_FOLDER, normalize=True)
+    
+    start_pred = time.time()
+    y_pred = sv.predict(X)
+    print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
-viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
+    kappa = cohen_kappa_score(y, y_pred)
+    print(f'Kappa: {kappa}')
+    print(classification_report(y, y_pred))
 
-end=time.time()
-elapsed=end-start
-print("Run time: " + str(timedelta(seconds=elapsed)))
+    yr = y_pred.reshape(shape)
+
+    viz.createGeotiff(OUT_RASTER, yr, DS_FOLDER + "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
+
+    end=time.time()
+    elapsed=end-real_start
+    print("Total run time: " + str(timedelta(seconds=elapsed)))
+
+if __name__ == "__main__":
+    main(sys.argv)

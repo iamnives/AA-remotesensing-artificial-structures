@@ -28,6 +28,7 @@ ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
 TS1_FOLDER = DS_FOLDER + "t1stats/"
+STATIC_FOLDER = DS_FOLDER + "static/"
 
 # Class to text for plotting features
 def feature_map(u):

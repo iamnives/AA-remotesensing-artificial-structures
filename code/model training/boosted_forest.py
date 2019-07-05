@@ -36,6 +36,7 @@ REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
 
 
 def main(argv):
+    real_start = time.time()
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
         train_size, normalize=False, balance=False, osm_roads=True)
@@ -101,11 +102,11 @@ def main(argv):
 
     y_pred_proba = np.concatenate((y_pred, y_pred2))
     y_pred_classes = np.array([ np.argmax(yi, axis=-1) + 1 for yi in tqdm(y_pred_proba)])
+    print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
     kappa = cohen_kappa_score(y, y_pred_classes)
     print(f'Kappa: {kappa}')
     print(classification_report(y, y_pred_classes))
-    print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
     y_pred_classes_reshaped = y_pred_classes.reshape(shape)
 
@@ -130,7 +131,7 @@ def main(argv):
     print("Matrix creation time: " + str(timedelta(seconds=elapsed)))
 
     end = time.time()
-    elapsed = end-start
+    elapsed = end-real_start
     print("Total run time: " + str(timedelta(seconds=elapsed)))
 
 if __name__ == "__main__":
