@@ -85,12 +85,12 @@ def scl_map(x_elem):
         int: class number in the classification format
    """
     if x_elem == 4:
-        return 3
+        return 2
     if x_elem == 5:
         return 1
     if x_elem == 6:
-        return 4
-    return 5  # anomalies or noclass
+        return 3
+    return 4  # anomalies or noclass
 
 def reverse_scl_map(x_elem):
     """Maps one element from x to the given class on SCL standart
@@ -133,15 +133,10 @@ def ghsl_map(x_elem):
         int: class number in the SCL format
    """
     if x_elem == 1:
-        return 4
-    if x_elem == 2:
         return 3
+    if x_elem == 2:
+        return 2
     return 1  # else its structure
-
-def ghsl_map_cos(x): # typed roads, 2,3,4,5,6
-    if x == 2:
-        return 1
-    return x
 
 def main(argv):
     """Runs main code for result analysis
@@ -155,100 +150,66 @@ def main(argv):
         SRC + "boosted_20px_ts_s1_s2_idxfixed_roads_truealign_classification.tiff", gdal.GA_ReadOnly)
     result_10m = result_10m.GetRasterBand(1).ReadAsArray()
 
-    result_20m = gdal.Open(
-        SRC + "boosted_20px_ts_s1_s2_idxfixed_roads_truealign_20m_classification.tiff", gdal.GA_ReadOnly)
-    result_20m = result_20m.GetRasterBand(1).ReadAsArray()
-
     gt = gdal.Open(GT_SRC + "T29SND_20190525T112121_SCL.tif", gdal.GA_ReadOnly)
     gt = gt.GetRasterBand(1).ReadAsArray()
     gt = gt[:result_10m.shape[0], :result_10m.shape[1]]
-
-    gt_20m = gdal.Open(
-        GT_SRC + "T29SND_20190525T112121_SCL_20m.tif", gdal.GA_ReadOnly)
-    gt_20m = gt_20m.GetRasterBand(1).ReadAsArray()
 
     cos = gdal.Open(COS_SRC + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
     cos = cos.GetRasterBand(1).ReadAsArray()
     cos = cos[:result_10m.shape[0], :result_10m.shape[1]]
 
-    roads = gdal.Open(COS_SRC + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-    roads = roads.GetRasterBand(1).ReadAsArray()
-    roads = roads[:result_10m.shape[0], :result_10m.shape[1]]
-    cos[roads == 4] = roads[roads == 4]
-
-    cos_20 = gdal.Open(COS_SRC + "clipped_20_cos_50982.tif", gdal.GA_ReadOnly)
-    cos_20 = cos_20.GetRasterBand(1).ReadAsArray()
-    cos_20 = cos_20[:result_10m.shape[0], :result_10m.shape[1]]
-
-    roads = gdal.Open(COS_SRC + "roads_20_cos_50982.tif", gdal.GA_ReadOnly)
-    roads = roads.GetRasterBand(1).ReadAsArray()
-    roads = roads[:cos_20.shape[0], :cos_20.shape[1]]
-    cos_20[roads == 4] = roads[roads == 4]
+    # roads = gdal.Open(COS_SRC + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    # roads = roads.GetRasterBand(1).ReadAsArray()
+    # roads = roads[:result_10m.shape[0], :result_10m.shape[1]]
+    # cos[roads == 4] = roads[roads == 4]
 
     ghsl_10m = gdal.Open(SRC + "gshl.tif", gdal.GA_ReadOnly)
     ghsl_10m = ghsl_10m.GetRasterBand(1).ReadAsArray()
     ghsl_10m = ghsl_10m[:result_10m.shape[0], :result_10m.shape[1]]
 
     print("Mapping GHSL...")
-    
     ghsl_10m_mapped = np.array([ghsl_map(yi)
                     for yi in tqdm(ghsl_10m.flatten())]).reshape((1937, 2501))
 
     print("Mapping cos...")
-    
     cos = np.array([data._class_map(yi)
                     for yi in tqdm(cos.flatten())]).reshape((1937, 2501))
-    cos_20 = np.array([data._class_map(yi)
-                       for yi in tqdm(cos_20.flatten())]).reshape((1937, 2501))
+
 
     print("Shapes: ")
-    print(result_10m.shape, result_20m.shape, gt.shape,
-          gt_20m.shape, cos.shape, cos_20.shape)
+    print(result_10m.shape, gt.shape, cos.shape)
 
     print("Mapping scl...")
     gt = np.array([scl_map(yi)
                    for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
-    gt_20m = np.array([scl_map(yi)
-                       for yi in tqdm(gt_20m.flatten())]).reshape((1937, 2501))
+
+
 
     classes = ["NON_VEGETATED", "VEGETATION", "WATER", "SCL Anomaly"]
-    classes_cos = ["NON_VEGETATED", "ROAD", "VEGETATION", "WATER"]
-    classes_scl = ["NON_VEGETATED", "ROAD", "VEGETATION", "WATER", "SCL Anomaly"]
+    classes_cos = ["NON_VEGETATED",  "VEGETATION", "WATER"]
+    classes_scl = ["NON_VEGETATED",  "VEGETATION", "WATER", "SCL Anomaly"]
+
 
     plot_confusion_matrix(cos.flatten(), gt.flatten(), classes=classes_scl,
                           normalize=True, title="SentinelSCL-COS 10m Normalized confusion matrix")
-    plot_confusion_matrix(cos_20.flatten(), gt_20m.flatten(), classes=classes_scl,
-                          normalize=True, title="SentinelSCL-COS 20m Normalized confusion matrix")
 
     plot_confusion_matrix(cos.flatten(), result_10m.flatten(
     ), classes=classes_cos, normalize=True, title="XGBoost-COS 10m Normalized confusion matrix")
-    plot_confusion_matrix(cos.flatten(), result_20m.flatten(
-    ), classes=classes_cos, normalize=True, title="XGBoost-COS 20m Normalized confusion matrix")
+
 
     print("Mapping results...")
     result_10_mapped = np.array(
         [reverse_scl_map(yi) for yi in tqdm(result_10m.flatten())]).reshape((1937, 2501))
 
-    result_20_mapped = np.array(
-        [reverse_scl_map(yi) for yi in tqdm(result_20m.flatten())]).reshape((1937, 2501))
-
     print("Re-mapping scl...")
     gt_mapped = np.array(
         [scl_gt_map(yi) for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
 
-    gt_20_mapped = np.array(
-        [scl_gt_map(yi) for yi in tqdm(gt_20m.flatten())]).reshape((1937, 2501))
-
     plot_confusion_matrix(gt_mapped.flatten(), result_10_mapped.flatten(
     ), classes=classes, normalize=True, title="XGBoost-SentinelSCL 10m Normalized confusion matrix")
-    plot_confusion_matrix(gt_20_mapped.flatten(), result_20_mapped.flatten(
-    ), classes=classes, normalize=True, title="XGBoost-SentinelSCL 20m Normalized confusion matrix")
 
     plot_confusion_matrix(cos.flatten(), ghsl_10m_mapped.flatten(
     ), classes=classes_cos, normalize=True, title="GHSL-Cos 10m Normalized confusion matrix")
-
-    cos = np.array([ghsl_map_cos(yi)
-                    for yi in tqdm(cos.flatten())]).reshape((1937, 2501))
 
     kappa = cohen_kappa_score(cos.flatten(), ghsl_10m_mapped.flatten())
     print(f'Kappa: {kappa}')

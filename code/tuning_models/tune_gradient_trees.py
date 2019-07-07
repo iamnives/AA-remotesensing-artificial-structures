@@ -25,7 +25,7 @@ def model(dfs):
     
     train_size = int(19386625*0.05)
     X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=True)
+        train_size, normalize=False, balance=False, osm_roads=False)
         
     start = time.time()
     print(f'Tuning on {X_train.shape}')
@@ -37,7 +37,7 @@ def model(dfs):
     # much fun of fighting against overfit
     # n_estimators is how many round of boosting
     # finally, ensemble xgboost with multiple seeds may reduce variance
-    n_trees = [1500]
+    n_trees = [500,1000,1500]
     parameters = {'n_jobs': [4],
                   'tree_method': ['gpu_hist'],
                   'predictor': ['gpu_predictor'],
@@ -48,14 +48,13 @@ def model(dfs):
                   'max_depth': [3, 5, 6, 8],
                   'min_child_weight': [1, 3, 5],
                   "gamma": [0, 1, 5],
-                  'colsample_bytree': uniform(0.7,0.9),
+                  'colsample_bytree': uniform(0.7,0.2),
                   'n_estimators': n_trees,
-                  'max_delta_step': uniform(1,10),
+                  'max_delta_step': uniform(1,9),
                   'verbose': [1]}
 
     kappa_scorer = make_scorer(cohen_kappa_score)
-    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={
-                            'recall_macro'}, refit='recall_macro', return_train_score=False, n_iter=25, verbose=1)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=50, verbose=1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")
@@ -70,6 +69,7 @@ def model(dfs):
     matrix = confusion_matrix(y_test, y_pred)
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
+    print(matrix)
 
     end = time.time()
     elapsed = end-start

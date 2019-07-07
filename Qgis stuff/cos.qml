@@ -23,17 +23,17 @@
         <stdDevFactor>2</stdDevFactor>
       </minMaxOrigin>
       <colorPalette>
-        <paletteEntry alpha="255" value="1" label="1" color="#ffffff"/>
-        <paletteEntry alpha="255" value="2" label="2" color="#ffffff"/>
-        <paletteEntry alpha="255" value="3" label="3" color="#ffffff"/>
-        <paletteEntry alpha="255" value="4" label="4" color="#a86ee1"/>
-        <paletteEntry alpha="255" value="6" label="6" color="#ffffff"/>
-        <paletteEntry alpha="255" value="7" label="7" color="#ffffff"/>
-        <paletteEntry alpha="255" value="8" label="8" color="#ffffff"/>
-        <paletteEntry alpha="255" value="9" label="9" color="#ffffff"/>
-        <paletteEntry alpha="255" value="10" label="10" color="#ffffff"/>
-        <paletteEntry alpha="255" value="12" label="12" color="#ffffff"/>
-        <paletteEntry alpha="255" value="13" label="13" color="#ffffff"/>
+        <paletteEntry alpha="255" value="1" label="1" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="2" label="2" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="3" label="3" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="4" label="4" color="#ffffff"/>
+        <paletteEntry alpha="255" value="6" label="6" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="7" label="7" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="8" label="8" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="9" label="9" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="10" label="10" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="12" label="12" color="#ff02c4"/>
+        <paletteEntry alpha="255" value="13" label="13" color="#ff02c4"/>
         <paletteEntry alpha="255" value="14" label="14" color="#000000"/>
         <paletteEntry alpha="255" value="16" label="16" color="#000000"/>
         <paletteEntry alpha="255" value="17" label="17" color="#000000"/>
