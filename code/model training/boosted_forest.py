@@ -3,6 +3,7 @@ Created on Sun Mar  3 21:42:16 2019
 
 @author: André Neves
 """
+
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -21,7 +22,7 @@ from xgboost import plot_importance
 from joblib import dump, load
 import xgboost as xgb
 import matplotlib.pyplot as plt
-
+from feature_selection import fselector
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -29,15 +30,12 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_classification.tiff"
+    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_roads_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_classification"
+    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_roads_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "/ignored/static/clipped_sentinel2_B08.vrt"
-
-OUT_FEATURES = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_idx_features.pdf"
 
 def str_2_bool(v):
     if isinstance(v, bool):
@@ -55,10 +53,17 @@ def main(argv):
     parser.add_argument("--roads", type=str_2_bool, nargs='?',
                     const=True, default=False,
                     help="Activate OSM roads")
+    parser.add_argument("--fselect", type=str_2_bool, nargs='?',
+                    const=True, default=False,
+                    help="Activate feature selection roads")
 
     args = parser.parse_args()
 
     road_flag = args.roads
+    selector_flag = args.fselect
+
+    if road_flag:
+        print("Using roads...")
 
     obj = 'binary:hinge' if args.roads else 'multi:softmax'
 
@@ -68,18 +73,29 @@ def main(argv):
         train_size, normalize=False, balance=False, osm_roads=road_flag)
 
     start = time.time()
-    # Build a forest and compute the feature importances
-    forest = xgb.XGBClassifier(colsample_bytree=0.5483193137202504,
-                               gamma=0.1,
-                               gpu_id=0,
-                               learning_rate=0.6783980222181293,
-                               max_depth=6,
-                               min_child_weight=1,
-                               n_estimators=1500,
-                               n_jobs=4,
-                               objective=obj,  # binary:hinge if binary classification
-                               predictor='gpu_predictor',
-                               tree_method='gpu_hist')
+
+    forest = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
+                            gamma=5,
+                            gpu_id=0,
+                            learning_rate=0.2049732654267658,
+                            max_depth=8,
+                            min_child_weight=1,
+                            max_delta_step=9.075685204314162,
+                            n_estimators=1500,
+                            n_jobs=4,
+                            objective=obj,  # binary:hinge if binary classification
+                            predictor='gpu_predictor',
+                            tree_method='gpu_hist')
+
+
+    if selector_flag:
+        print("Feature importances running...")
+        selector = fselector.Fselector(forest, mode="elastic", thold=0.25)
+        transformer = selector.select(X, y)
+
+        print("Transforming data...")
+        X = transformer.transform(X)
+        X_test = transformer.transform(X_test)
 
     print("Fitting data...")
     forest.fit(X, y)
@@ -94,19 +110,6 @@ def main(argv):
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
     print(confusion_matrix(y_test, y_pred))
-
-    importances = forest.feature_importances_
-    indices = np.argsort(importances)[::-1]
-    # Plot the feature importances of the forest
-    plt.figure()
-    plt.title("Feature importances")
-    plt.bar(range(X.shape[1]), importances[indices],
-            color="c", align="center")
-    plt.xticks(range(X.shape[1]), data.feature_map(
-        indices), rotation='90', horizontalalignment="right")
-    plt.xlim([-1, X.shape[1]])
-
-    plt.savefig(OUT_FEATURES, bbox_inches='tight')
 
     dump(forest, '../sensing_data/models/boosted.joblib')
     print("Saved model to disk")
