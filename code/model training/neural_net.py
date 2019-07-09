@@ -44,7 +44,7 @@ def model(dfs):
     start = time.time()
     train_size = int(19386625*0.2)
     X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=True, balance=False)
+        train_size, normalize=True, balance=False, osm_roads=False)
 
     input_shape = X_train.shape[1]
     logits = 4
@@ -60,9 +60,9 @@ def model(dfs):
 
     dnn = Sequential()
     # Define DNN structure
-    dnn.add(Dense(32, input_dim=input_shape, activation='relu'))
-    dnn.add(Dense(64, input_dim=input_shape, activation='relu'))
-    dnn.add(Dropout(0.4))
+    dnn.add(Dense(32, input_dim=input_shape, activation='elu'))
+    dnn.add(Dense(32, input_dim=input_shape, activation='elu'))
+    dnn.add(Dropout(0.2))
     dnn.add(Dense(units=logits, activation='softmax'))
 
     dnn.compile(
@@ -73,7 +73,7 @@ def model(dfs):
     dnn.summary()
 
     dnn.fit(X_train, y_train_onehot,
-            epochs=10, validation_split=0.2, class_weight=class_weights)
+            epochs=20, validation_split=0.2, class_weight=class_weights)
 
     y_pred_onehot = dnn.predict(X_test)
     y_pred = [np.argmax(pred) for pred in y_pred_onehot]

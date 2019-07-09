@@ -13,7 +13,7 @@ import numpy as np
 from utils import data
 from sklearn.linear_model import LassoCV
 from sklearn.feature_selection import SelectFromModel
-
+from tqdm import tqdm
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -21,13 +21,16 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/forest_20px_ts_s2_idx_roadstrack_align_classification.tiff"
+    "/timeseries/forest_20px_ts_s1_s2_dem_idx_classification.tiff"
 
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/forest_20px_ts_s2_idx_roadstrack_align_classification_proba_"
+    "/timeseries/forest_20px_ts_s1_s2_dem_idx_classification_proba_"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "/ignored/static/clipped_sentinel2_B08.vrt"
+
+OUT_FEATURES = DATA_FOLDER + "results/" + ROI + \
+    "/timeseries/forest_20px_ts_s1_s2_dem_idx_features.pdf"
 
 
 def main(argv):
@@ -69,6 +72,8 @@ def main(argv):
         indices), rotation='90', horizontalalignment="right")
     plt.xlim([-1, X.shape[1]])
     plt.show()
+    
+    plt.savefig(OUT_FEATURES)
 
     dump(forest, '../sensing_data/models/forest.joblib')
     print("Saved model to disk")
@@ -77,17 +82,36 @@ def main(argv):
     X, y, shape = data.load_prediction(ratio=1, normalize=False)
     
     start_pred = time.time()
-    y_pred = forest.predict(X)
+    y_pred_proba = forest.predict_proba(X)
+    y_pred_classes = np.array(
+        [np.argmax(yi, axis=-1) + 1 for yi in tqdm(y_pred_proba)])
     print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
-    kappa = cohen_kappa_score(y, y_pred)
+    kappa = cohen_kappa_score(y, y_pred_classes)
     print(f'Kappa: {kappa}')
-    print(classification_report(y, y_pred))
+    print(classification_report(y, y_pred_classes))
 
-    yr = y_pred.reshape(shape)
+    yr = y_pred_classes.reshape(shape)
 
-    viz.createGeotiff(OUT_RASTER, yr, REF_FILE +
-                      "clipped_sentinel2_B03.vrt", gdal.GDT_Byte)
+    viz.createGeotiff(OUT_RASTER, yr, REF_FILE, gdal.GDT_Byte)
+
+    print("Creating uncertainty matrix...")
+    start_matrix = time.time()
+
+    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 3))
+
+    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura.tiff",
+                      y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
+    # viz.createGeotiff(OUT_PROBA_RASTER + "estrada.tiff",
+    #                   y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+    viz.createGeotiff(OUT_PROBA_RASTER + "restante.tiff",
+                      y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+    viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
+                      y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
+
+    end = time.time()
+    elapsed = end-start_matrix
+    print("Matrix creation time: " + str(timedelta(seconds=elapsed)))
 
     end = time.time()
     elapsed = end-real_start

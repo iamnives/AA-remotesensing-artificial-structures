@@ -109,7 +109,7 @@ def get_features():
     return np.array(src_dss)
 
 
-def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=True, convolve=False):
+def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=False, convolve=False):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -122,14 +122,13 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
     src_dss.sort()
 
     refDs = gdal.Open(
-            DS_FOLDER + "/ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
+        DS_FOLDER + "/ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
     shape = tuple([int(ratio*i) for i in band.shape])
 
     try:
         print("Trying to load cached data...")
         X = np.load(CACHE_FOLDER + "/pred_data.npy")
-        y = np.load(CACHE_FOLDER + "/pred_labels.npy")
         print("Using cached data...")
     except FileNotFoundError:
         print("Failed to load cached data...")
@@ -146,8 +145,8 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
             if convolve:
                 # Blur kernel
                 filter_kernel = [[1, 1, 1],
-                                [1, -8, 1],
-                                [1, 1, 1]]
+                                 [1, -8, 1],
+                                 [1, 1, 1]]
                 test_ds = scipy.signal.convolve2d(
                     test_ds, filter_kernel, mode='same', boundary='fill', fillvalue=0)
 
@@ -164,8 +163,13 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
             normalizer = preprocessing.Normalizer().fit(X)
             X = normalizer.transform(X)
 
-        labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-        y = labelDS.GetRasterBand(1).ReadAsArray()[:shape[0], :shape[1]].flatten()
+        print("Saving data to file cache...")
+        np.save(CACHE_FOLDER + "/pred_data.npy", X)
+
+        labelDS = gdal.Open(
+            DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+        y = labelDS.GetRasterBand(1).ReadAsArray()[
+            :shape[0], :shape[1]].flatten()
 
         maping_f = _class_map
         if binary:
@@ -178,14 +182,9 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
                 :shape[0], :shape[1]].flatten()
             y[roads == 4] = roads[roads == 4]
             maping_f = _road_map
-
+            
         if map_classes:
             y = np.array([maping_f(yi) for yi in tqdm(y)])
-
-        print("Saving data to file cache...")
-        np.save(CACHE_FOLDER + "/pred_data.npy", X)
-        print("Saving labels to file cache...")
-        np.save(CACHE_FOLDER + "/pred_labels.npy", y)
 
     print("Prediction data: Done!")
     return X, y, shape
@@ -217,7 +216,6 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     try:
         print("Trying to load cached data...")
         X = np.load(CACHE_FOLDER + "/train_data.npy")
-        y = np.load(CACHE_FOLDER + "/train_labels.npy")
         print("Using cached data...")
     except FileNotFoundError:
         print("Failed to load cached data...")
@@ -248,9 +246,6 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         # Prepare training data (set of pixels used for training) and labels
         isTrain = np.nonzero(labelBands)
 
-        y = labelBands[isTrain]
-        roads = roads[isTrain]
-
         # Get list of raster bands info as array, already indexed by labels non zero
         print("Datasets: Loading...")
         for raster in tqdm(src_dss):
@@ -261,7 +256,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
                 test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
 
                 if convolve:
-                    # This should do moving average
+                    # This should do moving average try 5x5
                     filter_kernel = [[1, 1, 1],
                                      [1, -8, 1],
                                      [1, 1, 1]]
@@ -277,23 +272,33 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         print("Datasets: Done!           ")
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
 
-        maping_f = _class_map
-        if binary:
-            maping_f = _class_map_binary
-
-        if osm_roads:
-            y[roads == 4] = roads[roads == 4]
-            maping_f = _road_map
-
-        if map_classes:
-            print("Class Mapping: Loading...")
-            y = np.array([maping_f(yi) for yi in tqdm(y)])
-            print("Class Mapping: Done!      ")
-            
         print("Saving data to file cache...")
         np.save(CACHE_FOLDER + "/train_data.npy", X)
-        print("Saving labels to file cache...")
-        np.save(CACHE_FOLDER + "/train_labels.npy", y)
+
+    labelDS = gdal.Open(
+        DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+    labelBands = labelDS.GetRasterBand(1).ReadAsArray()[:, :]
+    labelDS = gdal.Open(
+        DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+    roads = labelDS.GetRasterBand(1).ReadAsArray()
+
+    isTrain = np.nonzero(labelBands)
+
+    y = labelBands[isTrain]
+    roads = roads[isTrain]
+
+    maping_f = _class_map
+    if binary:
+        maping_f = _class_map_binary
+
+    if osm_roads:
+        y[roads == 4] = roads[roads == 4]
+        maping_f = _road_map
+
+    if map_classes:
+        print("Class Mapping: Loading...")
+        y = np.array([maping_f(yi) for yi in tqdm(y)])
+        print("Class Mapping: Done!      ")
 
     print("Train test split...")
     # Split the dataset in two equal parts
