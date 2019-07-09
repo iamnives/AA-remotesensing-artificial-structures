@@ -65,7 +65,7 @@ def main(argv):
     if road_flag:
         print("Using roads...")
 
-    obj = 'binary:hinge' if args.roads else 'multi:softmax'
+    obj = 'multi:softmax'
 
     real_start = time.time()
     train_size = int(19386625*0.2)
