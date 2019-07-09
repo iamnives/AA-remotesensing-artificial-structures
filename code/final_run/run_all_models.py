@@ -1,4 +1,3 @@
-
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -17,8 +16,8 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 import csv   
-from sklearn.model_selection import train_test_split
 
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm
 from sklearn.linear_model import SGDClassifier
@@ -43,9 +42,9 @@ def models():
                                 min_child_weight=1,
                                 max_delta_step=9.075685204314162,
                                 n_estimators=1500,
-                                n_jobs=4,
+                                n_jobs=-1,
                                 objective='multi:softmax',
-                                predictor='cpu_predictor',
+                                predictor='gpu_predictor',
                                 tree_method='gpu_hist')
 
     forest = RandomForestClassifier(n_estimators=500,
@@ -76,19 +75,25 @@ def write_to_file(line):
 def main(argv):
     # DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3
     # LABELS codes: estruturas 1, estradas 2, estrutura separada 3
-    write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME'])
+    # write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME'])
+
 
     boosted, sv, sgc, forest = models()
-    dataset = 3
+
+    dataset = 1
     n_classes = 3
+    labels = 1
+
     X, y, X_test, y_test = get_Data()
 
+    print("Starting model training with sample size: " + str(X.shape[0]))
     print("Fitting XGB...")
     start = time.time()
     boosted.fit(X,y)
     end = time.time()
     traintime = end-start
 
+    print("Predicting...")
     start = time.time()
     pred = boosted.predict(X_test)
     end = time.time()
@@ -96,7 +101,7 @@ def main(argv):
 
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(0, n_classes)):
-        line = ['XGB', dataset, X.shape[0], 1, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+        line = ['XGB', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
         write_to_file(line)
 
     print("Fitting RF...")
@@ -105,14 +110,15 @@ def main(argv):
     end = time.time()
     traintime = end-start
 
+    print("Predicting...")
     start = time.time()
-    pred = pred.predict(X_test)
+    pred = forest.predict(X_test)
     end = time.time()
     predtime = end-start
 
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(0, n_classes)):
-        line = ['RF', dataset, X.shape[0], 1, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+        line = ['RF', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
         write_to_file(line)
 
     print("Normalization for SVMs: Loading...")
@@ -127,6 +133,7 @@ def main(argv):
     end = time.time()
     traintime = end-start
 
+    print("Predicting...")
     start = time.time()
     pred = sgc.predict(X_test)
     end = time.time()
@@ -134,19 +141,20 @@ def main(argv):
 
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(0, n_classes)):
-        line = ['SGD', dataset, X.shape[0], 1, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+        line = ['SGD', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
         write_to_file(line)
 
     print("Fitting svm...")
     # svm cant handle full training data
     X_train, X_test, y_train, y_test = train_test_split(
-        X_test, y_test, test_size=20000, train_size=100_000)
+        X_test, y_test, test_size=20000, train_size=100_000, stratify=y_test)
 
     start = time.time()
     sv.fit(X_train,y_train)
     end = time.time()
     traintime = end-start
-
+    
+    print("Predicting...")
     start = time.time()
     pred = sv.predict(X_test)
     end = time.time()
@@ -154,7 +162,7 @@ def main(argv):
 
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(0, n_classes)):
-        line = ['SVM', dataset, X_train.shape[0], 1, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+        line = ['SVM', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
         write_to_file(line)
 
 if __name__ == "__main__":
