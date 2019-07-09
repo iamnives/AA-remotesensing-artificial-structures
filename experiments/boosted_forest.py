@@ -23,7 +23,6 @@ from joblib import dump, load
 import xgboost as xgb
 import matplotlib.pyplot as plt
 from feature_selection import fselector
-from sklearn.model_selection import train_test_split
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -91,12 +90,8 @@ def main(argv):
 
     if selector_flag:
         print("Feature importances running...")
-        # svm cant handle full training data
-        X_train_feature, _, y_train_feature, _ = train_test_split(
-            X_test, y_test, test_size=0, train_size=100_000)
-
         selector = fselector.Fselector(forest, mode="elastic", thold=0.25)
-        transformer = selector.select(X_train_feature, y_train_feature)
+        transformer = selector.select(X, y)
 
         print("Transforming data...")
         X = transformer.transform(X)
