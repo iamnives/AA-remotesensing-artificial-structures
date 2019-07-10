@@ -123,7 +123,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
 
     try:
         print("Trying to load cached data...")
-        X = np.load(CACHE_FOLDER + "/pred_data.npy")
+        X = np.load(CACHE_FOLDER + "pred_data.npy")
         print("Using cached data...")
     except FileNotFoundError:
         print("Failed to load cached data...")
@@ -159,7 +159,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
             X = normalizer.transform(X)
 
         print("Saving data to file cache...")
-        np.save(CACHE_FOLDER + "/pred_data.npy", X)
+        np.save(CACHE_FOLDER + "pred_data.npy", X)
 
     labelDS = gdal.Open(
         DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
@@ -210,7 +210,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
     try:
         print("Trying to load cached data...")
-        X = np.load(CACHE_FOLDER + "/train_data.npy")
+        X = np.load(CACHE_FOLDER + "train_data.npy")
         print("Using cached data...")
     except FileNotFoundError:
         print("Failed to load cached data...")
@@ -269,7 +269,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
 
         print("Saving data to file cache...")
-        np.save(CACHE_FOLDER + "/train_data.npy", X)
+        np.save(CACHE_FOLDER + "train_data.npy", X)
 
     cos_ds = gdal.Open(
         DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
