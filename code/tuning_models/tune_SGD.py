@@ -18,7 +18,7 @@ from utils import data
 from utils import metrics
 from datetime import timedelta
 import time
-
+import numpy as np
 
 
 def model(dfs):
@@ -31,13 +31,13 @@ def model(dfs):
     print(f'Tuning on {X_train.shape}')
     tuning_params = {
         'loss': ['hinge', 'perceptron'],
-        'penalty': ['elasticnet', 'l2'],
-        'alpha': uniform(0, 1),
+        'penalty': ['elasticnet', 'l2', 'l1'],
+        'alpha': 10.0**-np.arange(1,7),
         'l1_ratio': uniform(0, 1),
         'early_stopping': [True],
         'class_weight': ['balanced'],
         'tol': [1e-3],
-        'max_iter': [1000]
+        'max_iter': [1000, np.ceil(10**6 / train_size)]
     }
 
     print(
@@ -45,7 +45,7 @@ def model(dfs):
     print()
     kappa_scorer = make_scorer(cohen_kappa_score)
     gs = RandomizedSearchCV(SGDClassifier(), tuning_params, cv=3, scoring={
-                            'kappa': kappa_scorer}, refit='kappa', return_train_score=True,  n_iter=50, verbose=1, n_jobs=4)
+                            'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=200, verbose=1, n_jobs=-1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
@@ -65,9 +65,6 @@ def model(dfs):
     end = time.time()
     elapsed = end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
-
-    viz.plot_confusionmx(matrix)
-
 
 def main(argv):
     model(None)

@@ -78,6 +78,17 @@ def _class_map(x):  # typed roads, 2,3,4,5,6
         return 3
     return 2
 
+def _road_and_map(x): 
+    if x == 4:
+        return 2
+    if x >= 1 and x <= 13:
+        return 1
+    elif x > 13 and x <= 42:
+        return 3
+    elif x > 42 and x <= 48:
+        return 4
+    return 3
+
 def _road_map(x):  # roads vs all
     if x == 4:
         return 1
@@ -289,7 +300,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
 
     if osm_roads:
         y[roads == 4] = roads[roads == 4]
-        maping_f = _road_map
+        maping_f = _road_and_map
 
     if map_classes:
         print("Class Mapping: Loading...")

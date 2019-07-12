@@ -44,7 +44,7 @@ def get_points_from_geomety(file):
     
     for feature in  lyr:
 #        print("entrou")
-        i_desc_fgc = feature.GetFieldIndex("ID_R_FGC")
+        i_desc_fgc = feature.GetFieldIndex("ID_SEQ")
         fgc_id = feature.GetFieldAsInteger(i_desc_fgc)
         geom = feature.GetGeometryRef() 
            
@@ -377,7 +377,7 @@ def test_concav(file,out):
             poly = ogr.Geometry(ogr.wkbPolygon)
             poly.AddGeometry(new_ring)
             new_feat = ogr.Feature(concave_lyr.GetLayerDefn())
-            new_feat.SetField("ID_R_FGC",fgc_id)
+            new_feat.SetField("ID_SEQ",fgc_id)
             new_feat.SetGeometry(poly)
             concave_lyr.CreateFeature(new_feat)                   
             new_feat = None
@@ -445,7 +445,7 @@ def interior(subdir, file):
         
         #Junta geometrias
         merge_geometries_by_field(file_path, temp_file, None)
-        if file.startswith("habi"):
+        if file.startswith("clipped"):
             #calcular a concav hull
             print("A calcular o interior das faixas ao redor das habitações...")
             test_concav(file_path, subdir+"/temp_1_concave_"+file)

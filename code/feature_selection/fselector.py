@@ -14,12 +14,12 @@ class Fselector:
         self.clf = clf
 
         if mode == "lasso":
-            self.selector = ElasticNet(alpha=1, l1_ratio=1, copy_X=True)
+            self.selector = ElasticNet(alpha=0.5, l1_ratio=1, copy_X=True)
         elif mode == "boruta":
             self.selector = BorutaPy(clf, n_estimators=1500, verbose=1)
         elif mode == "elastic":
             self.selector = ElasticNetCV(l1_ratio=np.geomspace(
-                0.1, 1), cv=3, copy_X=True, n_jobs=-1)
+                0.1, 1), normalize=True, cv=3, copy_X=True, n_jobs=-1)
         elif mode == "importances":
             if thold < 0.80:
                 print("Warning: thold for feature importances is inverted from the other models, are you sure you want a thold lower than 0.8?")

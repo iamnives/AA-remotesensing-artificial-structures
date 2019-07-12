@@ -31,9 +31,9 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_roads_classification.tiff"
+    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_TEST_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_roads_classification"
+    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_TEST_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "/ignored/static/clipped_sentinel2_B08.vrt"
@@ -56,7 +56,7 @@ def main(argv):
                     help="Activate OSM roads")
     parser.add_argument("--fselect", type=str_2_bool, nargs='?',
                     const=True, default=False,
-                    help="Activate feature selection roads")
+                    help="Activate feature selection")
 
     args = parser.parse_args()
 
@@ -85,22 +85,24 @@ def main(argv):
                             n_estimators=1500,
                             n_jobs=4,
                             objective=obj,  # binary:hinge if binary classification
-                            predictor='gpu_predictor',
+                            predictor='cpu_predictor',
                             tree_method='gpu_hist')
 
 
     if selector_flag:
         print("Feature importances running...")
         # svm cant handle full training data
-        X_train_feature, _, y_train_feature, _ = train_test_split(
+        x_train_feature, _, y_train_feature, _ = train_test_split(
             X_test, y_test, test_size=0, train_size=100_000)
 
         selector = fselector.Fselector(forest, mode="elastic", thold=0.25)
-        transformer = selector.select(X_train_feature, y_train_feature)
+        transformer = selector.select(x_train_feature, y_train_feature)
 
         print("Transforming data...")
+        print("Before: ", X.shape)
         X = transformer.transform(X)
         X_test = transformer.transform(X_test)
+        print("After: ", X.shape)
 
     print("Fitting data...")
     forest.fit(X, y)

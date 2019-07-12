@@ -1,39 +1,56 @@
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from feature_selection import fselector
-import matplotlib.pyplot as plt
-import xgboost as xgb
-from joblib import dump, load
-from xgboost import plot_importance
-from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
-import gdal
-from utils import data
-from utils import visualization as viz
-import time
-from datetime import timedelta
-import numpy as np
-from tqdm import tqdm
-import argparse
-import csv   
-
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import svm
-from sklearn.linear_model import SGDClassifier
+import csv
 from sklearn import preprocessing
-
+from sklearn.linear_model import SGDClassifier
+from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+import argparse
+from tqdm import tqdm
+import numpy as np
+from datetime import timedelta
 import time
+from utils import visualization as viz
+from utils import data
+import gdal
+from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
+from xgboost import plot_importance
+from joblib import dump, load
+import xgboost as xgb
+import matplotlib.pyplot as plt
+from feature_selection import fselector
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.layers import Dense, Dropout, Activation
+from tensorflow.keras.models import Sequential
+import tensorflow as tf
+from sklearn.utils import class_weight
+
+# DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3
+# LABELS codes: estruturas 1, estradas 2, estrutura separada 3, estrada e estrutura 4
+# write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME', 'FSELECTOR'])
+
+dataset = 3
+n_classes = 4
+labels = 4
+
+
+def write_to_file(line):
+    with open('./finalrun.csv', 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(line)
+
 
 def get_Data():
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False)
+        train_size, normalize=False, balance=False, osm_roads=True)
 
     return X, y, X_test, y_test
 
 
-def models():
+def xgbc(X, y, X_test, y_test):
     boosted = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
                                 gamma=5,
                                 gpu_id=0,
@@ -47,49 +64,10 @@ def models():
                                 predictor='gpu_predictor',
                                 tree_method='gpu_hist')
 
-    forest = RandomForestClassifier(n_estimators=500,
-                                    min_samples_leaf=4,
-                                    min_samples_split=2,
-                                    max_depth=130,
-                                    class_weight='balanced',
-                                    n_jobs=-1, verbose=1)
-
-    sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734)
-
-    sgc = SGDClassifier(alpha=0.2828985957487874, class_weight='balanced', early_stopping=True,
-                        l1_ratio=0.12293886358853467, loss='perceptron', max_iter=1000, penalty='l2', tol=0.001)
-
-
-    return boosted, sv, sgc, forest
-def get_metrics(y_pred, y_true):
-    kappa = cohen_kappa_score(y_true, y_pred)
-    report = classification_report(y_true, y_pred, output_dict=True)
-    return kappa, report
-
-
-def write_to_file(line):
-    with open('./finalrun.csv', 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(line)
-
-def main(argv):
-    # DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3
-    # LABELS codes: estruturas 1, estradas 2, estrutura separada 3
-    # write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME'])
-
-
-    boosted, sv, sgc, forest = models()
-
-    dataset = 1
-    n_classes = 3
-    labels = 1
-
-    X, y, X_test, y_test = get_Data()
-
     print("Starting model training with sample size: " + str(X.shape[0]))
     print("Fitting XGB...")
     start = time.time()
-    boosted.fit(X,y)
+    boosted.fit(X, y)
     end = time.time()
     traintime = end-start
 
@@ -100,36 +78,70 @@ def main(argv):
     predtime = end-start
 
     kappa, report = get_metrics(pred, y_test)
-    for i in list(range(0, n_classes)):
-        line = ['XGB', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+    for i in list(range(1, n_classes+1)):
+        line = ['XGB', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
         write_to_file(line)
 
+
+def forest(X, y, X_test, y_test):
+    rforest = RandomForestClassifier(n_estimators=500,
+                                    min_samples_leaf=4,
+                                    min_samples_split=2,
+                                    max_depth=130,
+                                    class_weight='balanced',
+                                    n_jobs=-1, verbose=1)
     print("Fitting RF...")
     start = time.time()
-    forest.fit(X,y)
+    rforest.fit(X, y)
     end = time.time()
     traintime = end-start
 
     print("Predicting...")
     start = time.time()
-    pred = forest.predict(X_test)
+    pred = rforest.predict(X_test)
     end = time.time()
     predtime = end-start
 
     kappa, report = get_metrics(pred, y_test)
-    for i in list(range(0, n_classes)):
-        line = ['RF', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+    for i in list(range(1, n_classes+1)):
+        line = ['RF', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
         write_to_file(line)
 
-    print("Normalization for SVMs: Loading...")
-    normalizer = preprocessing.Normalizer().fit(X)
-    X = normalizer.transform(X)
-    X_test = normalizer.transform(X_test)
-    print("Done!")
 
+def svmc(X, y, X_test, y_test):
+    sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734)
+
+    print("Fitting SVM...")
+    # svm cant handle full training data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=20000, train_size=100_000, stratify=y)
+
+    start = time.time()
+    sv.fit(X_train, y_train)
+    end = time.time()
+    traintime = end-start
+
+    print("Predicting...")
+    start = time.time()
+    pred = sv.predict(X_test)
+    end = time.time()
+    predtime = end-start
+
+    kappa, report = get_metrics(pred, y_test)
+    for i in list(range(1, n_classes+1)):
+        line = ['SVM', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
+        write_to_file(line)
+
+
+def sgdc(X, y, X_test, y_test):
+    sgc = SGDClassifier(alpha=0.2828985957487874, class_weight='balanced', early_stopping=True,
+                        l1_ratio=0.12293886358853467, loss='perceptron', max_iter=1000, penalty='l2', tol=0.001)
     print("Fitting SGD...")
     start = time.time()
-    sgc.fit(X,y)
+    sgc.fit(X, y)
     end = time.time()
     traintime = end-start
 
@@ -140,30 +152,83 @@ def main(argv):
     predtime = end-start
 
     kappa, report = get_metrics(pred, y_test)
-    for i in list(range(0, n_classes)):
-        line = ['SGD', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+    for i in list(range(1, n_classes+1)):
+        line = ['SGD', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
         write_to_file(line)
 
-    print("Fitting svm...")
-    # svm cant handle full training data
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_test, y_test, test_size=20000, train_size=100_000, stratify=y_test)
+def neural(X_train, y_train, X_test, y_test):
+    input_shape = X_train.shape[1]
 
+    y_train = y_train - 1
+    y_test = y_test - 1
+
+    class_weights = class_weight.compute_class_weight('balanced',
+                                                      np.unique(y_train),
+                                                      y_train)
+
+    y_train_onehot = tf.keras.utils.to_categorical(y_train, num_classes=n_classes)
+
+    dnn = Sequential()
+    # Define DNN structure
+    dnn.add(Dense(32, input_dim=input_shape, activation='elu'))
+    dnn.add(Dense(32, input_dim=input_shape, activation='elu'))
+    dnn.add(Dropout(0.2))
+    dnn.add(Dense(units=n_classes, activation='softmax'))
+
+    dnn.compile(
+        loss='categorical_crossentropy',
+        optimizer='Nadam',
+        metrics=['accuracy']
+    )
+    dnn.summary()
+
+    print("Fitting Keras DNN...")
     start = time.time()
-    sv.fit(X_train,y_train)
+    dnn.fit(X_train, y_train_onehot,
+            epochs=20, validation_split=0.2, class_weight=class_weights)
     end = time.time()
     traintime = end-start
-    
+
     print("Predicting...")
     start = time.time()
-    pred = sv.predict(X_test)
+    y_pred_onehot = dnn.predict(X_test)
+    y_pred = [np.argmax(pred) for pred in y_pred_onehot]
     end = time.time()
     predtime = end-start
 
-    kappa, report = get_metrics(pred, y_test)
-    for i in list(range(0, n_classes)):
-        line = ['SVM', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime]
+    kappa, report = get_metrics(y_pred, y_test)
+    for i in list(range(1, n_classes+1)):
+        line = ['DNN', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
         write_to_file(line)
+
+    
+def get_metrics(y_pred, y_true):
+    kappa = cohen_kappa_score(y_true, y_pred)
+    report = classification_report(y_true, y_pred, output_dict=True)
+    return kappa, report
+
+
+def main(argv):
+    X, y, X_test, y_test = get_Data()
+
+    xgbc(X, y, X_test, y_test)
+
+    forest(X, y, X_test, y_test)
+
+    print("Normalization for SVMs and DNN: Loading...")
+    normalizer = preprocessing.Normalizer().fit(X)
+    X = normalizer.transform(X)
+    X_test = normalizer.transform(X_test)
+    print("Done!")
+
+    sgdc(X, y, X_test, y_test)
+
+    svmc(X, y, X_test, y_test)
+
+    neural(X, y, X_test, y_test)
+
 
 if __name__ == "__main__":
     main(sys.argv)
