@@ -198,7 +198,7 @@ def neural(X_train, y_train, X_test, y_test):
     predtime = end-start
 
     kappa, report = get_metrics(y_pred, y_test)
-    for i in list(range(1, n_classes+1)):
+    for i in list(range(0, n_classes)):
         line = ['DNN', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
             i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
         write_to_file(line)
