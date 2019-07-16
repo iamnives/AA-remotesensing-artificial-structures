@@ -69,7 +69,7 @@ def reverse_class_map(u):
     }
     return np.array([text_classes[x] for x in u])
 
-def _class_map(x):  # typed roads, 2,3,4,5,6
+def _class_map(x):  
     if x >= 1 and x <= 13:
         return 1
     elif x > 13 and x <= 42:
@@ -77,6 +77,19 @@ def _class_map(x):  # typed roads, 2,3,4,5,6
     elif x > 42 and x <= 48:
         return 3
     return 2
+
+def _class_split_map(x):
+    if x == 1: 
+        return 1
+    if x == 2: 
+        return 2
+    if x >= 3 and x <= 13:
+        return 3
+    elif x > 13 and x <= 42:
+        return 4
+    elif x > 42 and x <= 48:
+        return 5
+    return 4
 
 def _road_and_map(x): 
     if x == 4:
@@ -115,7 +128,7 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=False, convolve=False):
+def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=False, convolve=False, split_struct=False):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -189,12 +202,14 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         y[roads == 4] = roads[roads == 4]
         maping_f = _road_map
 
+    if split_struct:
+            maping_f = _class_split_map
+
     if map_classes:
         y = np.array([maping_f(yi) for yi in tqdm(y)])
 
     print("Prediction data: Done!")
     return X, y, shape
-
 
 def load_timeseries(img_size):
     ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if (
@@ -216,8 +231,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=False, convolve=False):
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=False, convolve=False, split_struct=False):
 
     try:
         print("Trying to load cached data...")
@@ -301,6 +315,9 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     if osm_roads:
         y[roads == 4] = roads[roads == 4]
         maping_f = _road_and_map
+
+    if split_struct:
+        maping_f = _class_split_map
 
     if map_classes:
         print("Class Mapping: Loading...")

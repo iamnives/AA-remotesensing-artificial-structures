@@ -445,7 +445,7 @@ def interior(subdir, file):
         
         #Junta geometrias
         merge_geometries_by_field(file_path, temp_file, None)
-        if file.startswith("clipped"):
+        if file.startswith("ffFGC"):
             #calcular a concav hull
             print("A calcular o interior das faixas ao redor das habitações...")
             test_concav(file_path, subdir+"/temp_1_concave_"+file)
@@ -460,7 +460,7 @@ def interior(subdir, file):
         
                 
 if __name__ == '__main__':                              
-    interior(".", "clipped_fgc_multipol.shp")                
+    interior(".", "ffFGC_1418_filtered.shp")                
     difference("./interior_habi.shp", "./merged.shp", "./final_result.shp")                
                 
                 

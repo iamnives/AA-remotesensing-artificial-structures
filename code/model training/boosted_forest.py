@@ -66,12 +66,15 @@ def main(argv):
     if road_flag:
         print("Using roads...")
 
+    if selector_flag:
+        print("Using feature selection...")
+
     obj = 'multi:softmax'
 
     real_start = time.time()
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=road_flag)
+        train_size, normalize=False, balance=False, osm_roads=road_flag, split_struct=True)
 
     start = time.time()
 
@@ -95,9 +98,13 @@ def main(argv):
         x_train_feature, _, y_train_feature, _ = train_test_split(
             X_test, y_test, test_size=0, train_size=100_000)
 
-        selector = fselector.Fselector(forest, mode="elastic", thold=0.25)
+        selector = fselector.Fselector(forest, mode="importances", thold=0.95)
         transformer = selector.select(x_train_feature, y_train_feature)
 
+        features = transformer.get_support()
+        # feature_names = data.get_features()
+        # feature_names = feature_names[features]
+        print(features)
         print("Transforming data...")
         print("Before: ", X.shape)
         X = transformer.transform(X)
@@ -123,7 +130,7 @@ def main(argv):
 
     # Testing trash
     X, y, shape = data.load_prediction(
-        ratio=1, normalize=False, osm_roads=road_flag)
+        ratio=1, normalize=False, osm_roads=road_flag, split_struct=True)
 
     start_pred = time.time()
     # batch test

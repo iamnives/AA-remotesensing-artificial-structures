@@ -14,9 +14,9 @@ class Fselector:
         self.clf = clf
 
         if mode == "lasso":
-            self.selector = ElasticNet(alpha=0.5, l1_ratio=1, copy_X=True)
+            self.selector = ElasticNet(alpha=1e-05, l1_ratio=1, copy_X=True)
         elif mode == "boruta":
-            self.selector = BorutaPy(clf, n_estimators=1500, verbose=1)
+            self.selector = BorutaPy(clf, n_estimators='auto', verbose=1)
         elif mode == "elastic":
             self.selector = ElasticNetCV(l1_ratio=np.geomspace(
                 0.1, 1), normalize=True, cv=3, copy_X=True, n_jobs=-1)

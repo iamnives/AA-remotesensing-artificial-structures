@@ -30,14 +30,14 @@ def model(dfs):
     start = time.time()
     print(f'Tuning on {X_train.shape}')
     tuning_params = {
-        'loss': ['hinge', 'perceptron'],
-        'penalty': ['elasticnet', 'l2', 'l1'],
+        'loss': ['hinge'],
+        'penalty': ['elasticnet', 'l2', 'l1', 'none'],
         'alpha': 10.0**-np.arange(1,7),
         'l1_ratio': uniform(0, 1),
         'early_stopping': [True],
         'class_weight': ['balanced'],
         'tol': [1e-3],
-        'max_iter': [1000, np.ceil(10**6 / train_size)]
+        'max_iter': [1000, 500, 1500]
     }
 
     print(
@@ -45,7 +45,7 @@ def model(dfs):
     print()
     kappa_scorer = make_scorer(cohen_kappa_score)
     gs = RandomizedSearchCV(SGDClassifier(), tuning_params, cv=3, scoring={
-                            'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=200, verbose=1, n_jobs=-1)
+                            'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=200, verbose=2, n_jobs=-1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
@@ -61,6 +61,7 @@ def model(dfs):
     matrix = confusion_matrix(y_test, y_pred)
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
+    print(matrix)
 
     end = time.time()
     elapsed = end-start

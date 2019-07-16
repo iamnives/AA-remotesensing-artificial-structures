@@ -29,11 +29,11 @@ from sklearn.utils import class_weight
 
 # DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3
 # LABELS codes: estruturas 1, estradas 2, estrutura separada 3, estrada e estrutura 4
-# write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME', 'FSELECTOR'])
+# write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME', 'FSELECTOR', 'NFEATURES'])
 
-dataset = 3
-n_classes = 4
-labels = 4
+dataset = 2
+n_classes = 5
+labels = 3
 
 
 def write_to_file(line):
@@ -45,7 +45,7 @@ def write_to_file(line):
 def get_Data():
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=True)
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=True)
 
     return X, y, X_test, y_test
 
@@ -80,7 +80,7 @@ def xgbc(X, y, X_test, y_test):
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(1, n_classes+1)):
         line = ['XGB', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
-            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
 
@@ -106,7 +106,7 @@ def forest(X, y, X_test, y_test):
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(1, n_classes+1)):
         line = ['RF', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
-            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
 
@@ -132,13 +132,25 @@ def svmc(X, y, X_test, y_test):
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(1, n_classes+1)):
         line = ['SVM', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
-            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
 
 def sgdc(X, y, X_test, y_test):
+
     sgc = SGDClassifier(alpha=0.2828985957487874, class_weight='balanced', early_stopping=True,
-                        l1_ratio=0.12293886358853467, loss='perceptron', max_iter=1000, penalty='l2', tol=0.001)
+                        l1_ratio=0.12293886358853467, loss='hinge', max_iter=1000, penalty='l2', tol=0.001)
+
+    if dataset == 3 and labels == 3:
+        sgc = SGDClassifier(alpha=1e-05, class_weight='balanced', early_stopping=True,
+                        l1_ratio=0.3879508123619403, loss='hinge', max_iter=1000, penalty='elasticnet', tol=0.001)
+    if dataset == 3 and labels == 1:
+        sgc = SGDClassifier(alpha=1e-06, class_weight='balanced', early_stopping=True,
+                        l1_ratio=0.5611522829923167, loss='hinge', max_iter=500, penalty='L2', tol=0.001)
+    if dataset == 3 and labels == 4:
+        sgc = SGDClassifier(alpha=1e-05, class_weight='balanced', early_stopping=True,
+                        l1_ratio=0.7751072005346229, loss='hinge', max_iter=500, penalty='elasticnet', tol=0.001)
+
     print("Fitting SGD...")
     start = time.time()
     sgc.fit(X, y)
@@ -154,7 +166,7 @@ def sgdc(X, y, X_test, y_test):
     kappa, report = get_metrics(pred, y_test)
     for i in list(range(1, n_classes+1)):
         line = ['SGD', dataset, X.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
-            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
 def neural(X_train, y_train, X_test, y_test):
@@ -199,8 +211,8 @@ def neural(X_train, y_train, X_test, y_test):
 
     kappa, report = get_metrics(y_pred, y_test)
     for i in list(range(0, n_classes)):
-        line = ['DNN', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
-            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None']
+        line = ['DNN', dataset, X_train.shape[0], labels, False, i+1, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X_train.shape[1]]
         write_to_file(line)
 
     
