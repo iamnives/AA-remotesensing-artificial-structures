@@ -279,7 +279,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
                 if convolve:
                     # This should do moving average try 5x5
                     filter_kernel = [[1, 1, 1],
-                                     [1, -8, 1],
+                                     [1, 0, 1],
                                      [1, 1, 1]]
 
                     test_ds = scipy.signal.convolve2d(
