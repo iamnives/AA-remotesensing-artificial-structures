@@ -26,19 +26,9 @@ from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.models import Sequential
 import tensorflow as tf
 from sklearn.utils import class_weight
-<<<<<<< HEAD
-from sklearn.neighbors import KNeighborsClassifier
-# DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3
-# LABELS codes: estruturas 1, estradas 2, estrutura separada 3, estrada e estrutura 4
-# write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME', 'FSELECTOR', 'NFEATURES'])
-
-dataset = 2
-n_classes = 5
-labels = 3
-
-=======
 from tensorflow.keras.callbacks import EarlyStopping
->>>>>>> 5dd33adb4771cd5d7f78bd2a0851a4cabcd2bb73
+from sklearn.neighbors import KNeighborsClassifier
+
 
 def write_to_file(line):
     with open('./finalrun.csv', 'a', newline='') as f:
