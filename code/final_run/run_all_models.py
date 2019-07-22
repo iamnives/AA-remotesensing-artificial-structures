@@ -26,9 +26,8 @@ from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.models import Sequential
 import tensorflow as tf
 from sklearn.utils import class_weight
-from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.neighbors import KNeighborsClassifier
-
+from tensorflow.keras.callbacks import EarlyStopping
 
 def write_to_file(line):
     with open('./finalrun.csv', 'a', newline='') as f:
