@@ -26,6 +26,7 @@ from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.models import Sequential
 import tensorflow as tf
 from sklearn.utils import class_weight
+from sklearn.neighbors import KNeighborsClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 
 def write_to_file(line):
@@ -227,6 +228,30 @@ def neural(X_train, y_train, X_test, y_test, dataset, labels, n_classes):
             i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X_train.shape[1]]
         write_to_file(line)
 
+def knn(X, y, X_test, y_test):
+    neigh = KNeighborsClassifier(n_neighbors=3)
+
+    print("Fitting SVM...")
+    # svm cant handle full training data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=20000, train_size=100_000, stratify=y)
+
+    start = time.time()
+    neigh.fit(X_train, y_train)
+    end = time.time()
+    traintime = end-start
+
+    print("Predicting...")
+    start = time.time()
+    pred = neigh.predict(X_test)
+    end = time.time()
+    predtime = end-start
+
+    kappa, report = get_metrics(pred, y_test)
+    for i in list(range(0, n_classes)):
+        line = ['KNN', dataset, X_train.shape[0], labels, False, i+1, report[str(i)]['precision'], report[str(
+            i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X_train.shape[1]]
+        write_to_file(line)
     
 def get_metrics(y_pred, y_true):
     kappa = cohen_kappa_score(y_true, y_pred)
@@ -252,6 +277,8 @@ def run_test(dataset, labels, n_classes):
     svmc(X, y, X_test, y_test, dataset, labels, n_classes)
 
     neural(X, y, X_test, y_test, dataset, labels, n_classes)
+
+    # knn(X, y, X_test, y_test)
 
 
 if __name__ == "__main__":
