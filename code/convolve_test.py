@@ -30,16 +30,16 @@ OUT_RASTER = DS_FOLDER + "results/roads_test.tif"
 def test_pred():
     start = time.time()
 
-    raster_ds = gdal.Open(DS_FOLDER + "/ignored/static/clipped_sentinel2_B03.vrt", gdal.GA_ReadOnly)
+    raster_ds = gdal.Open(DS_FOLDER + "/ignored/static/freq_cinza.tif", gdal.GA_ReadOnly)
     band = raster_ds.GetRasterBand(1).ReadAsArray()
 
     # Square average kernel gives box blur.
-    filter_kernel = [[-1, -1, -1],
-                    [-1, 8, -1],
-                    [-1, -1, -1]]
+    filter_kernel = [[1, 1, 1],
+                    [1, 0, 1],
+                    [1, 1, 1]]
     band_convolved = scipy.signal.convolve2d(band, filter_kernel, mode='same', boundary='fill', fillvalue=0)
 
-    viz.createGeotiff(DS_FOLDER + "/ignored/static/convolved.tif", band_convolved, DS_FOLDER + "/ignored/static/clipped_sentinel2_B03.vrt", gdal.GDT_Float32)
+    viz.createGeotiff(DS_FOLDER + "/ignored/static/convolved.tif", band_convolved, DS_FOLDER + "/ignored/static/freq_cinza.tif", gdal.GDT_Float32)
 
     end = time.time()
     elapsed = end-start

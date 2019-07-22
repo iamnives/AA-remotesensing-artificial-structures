@@ -26,6 +26,7 @@ from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.models import Sequential
 import tensorflow as tf
 from sklearn.utils import class_weight
+<<<<<<< HEAD
 from sklearn.neighbors import KNeighborsClassifier
 # DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3
 # LABELS codes: estruturas 1, estradas 2, estrutura separada 3, estrada e estrutura 4
@@ -35,6 +36,9 @@ dataset = 2
 n_classes = 5
 labels = 3
 
+=======
+from tensorflow.keras.callbacks import EarlyStopping
+>>>>>>> 5dd33adb4771cd5d7f78bd2a0851a4cabcd2bb73
 
 def write_to_file(line):
     with open('./finalrun.csv', 'a', newline='') as f:
@@ -42,15 +46,14 @@ def write_to_file(line):
         writer.writerow(line)
 
 
-def get_Data():
+def get_Data(labels_test):
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False, split_struct=True)
-
+        train_size, normalize=False, balance=False, osm_roads=(labels_test==4), split_struct=(labels_test==3))
     return X, y, X_test, y_test
 
 
-def xgbc(X, y, X_test, y_test):
+def xgbc(X, y, X_test, y_test, dataset, labels, n_classes):
     boosted = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
                                 gamma=5,
                                 gpu_id=0,
@@ -71,6 +74,9 @@ def xgbc(X, y, X_test, y_test):
     end = time.time()
     traintime = end-start
 
+    dump(boosted, f'../sensing_data/models/boosted_{dataset}_{labels}.joblib')
+    print("Saved XGB to disk")
+
     print("Predicting...")
     start = time.time()
     pred = boosted.predict(X_test)
@@ -84,7 +90,7 @@ def xgbc(X, y, X_test, y_test):
         write_to_file(line)
 
 
-def forest(X, y, X_test, y_test):
+def forest(X, y, X_test, y_test, dataset, labels, n_classes):
     rforest = RandomForestClassifier(n_estimators=500,
                                     min_samples_leaf=4,
                                     min_samples_split=2,
@@ -96,6 +102,9 @@ def forest(X, y, X_test, y_test):
     rforest.fit(X, y)
     end = time.time()
     traintime = end-start
+
+    dump(rforest, f'../sensing_data/models/forest_{dataset}_{labels}.joblib')
+    print("Saved RF to disk")
 
     print("Predicting...")
     start = time.time()
@@ -110,7 +119,7 @@ def forest(X, y, X_test, y_test):
         write_to_file(line)
 
 
-def svmc(X, y, X_test, y_test):
+def svmc(X, y, X_test, y_test, dataset, labels, n_classes):
     sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734)
 
     print("Fitting SVM...")
@@ -122,6 +131,9 @@ def svmc(X, y, X_test, y_test):
     sv.fit(X_train, y_train)
     end = time.time()
     traintime = end-start
+
+    dump(sv, f'../sensing_data/models/svm_{dataset}_{labels}.joblib')
+    print("Saved SVC to disk")
 
     print("Predicting...")
     start = time.time()
@@ -136,18 +148,17 @@ def svmc(X, y, X_test, y_test):
         write_to_file(line)
 
 
-def sgdc(X, y, X_test, y_test):
+def sgdc(X, y, X_test, y_test, dataset, labels, n_classes):
 
     sgc = SGDClassifier(alpha=0.2828985957487874, class_weight='balanced', early_stopping=True,
-                        l1_ratio=0.12293886358853467, loss='hinge', max_iter=1000, penalty='l2', tol=0.001)
-
-    if dataset == 3 and labels == 3:
+                        l1_ratio=0.12293886358853467, loss='hinge', max_iter=1000, penalty='elasticnet', tol=0.001)
+    if labels == 3:
         sgc = SGDClassifier(alpha=1e-05, class_weight='balanced', early_stopping=True,
                         l1_ratio=0.3879508123619403, loss='hinge', max_iter=1000, penalty='elasticnet', tol=0.001)
-    if dataset == 3 and labels == 1:
+    if  labels == 1:
         sgc = SGDClassifier(alpha=1e-06, class_weight='balanced', early_stopping=True,
                         l1_ratio=0.5611522829923167, loss='hinge', max_iter=500, penalty='L2', tol=0.001)
-    if dataset == 3 and labels == 4:
+    if  labels == 4:
         sgc = SGDClassifier(alpha=1e-05, class_weight='balanced', early_stopping=True,
                         l1_ratio=0.7751072005346229, loss='hinge', max_iter=500, penalty='elasticnet', tol=0.001)
 
@@ -156,6 +167,9 @@ def sgdc(X, y, X_test, y_test):
     sgc.fit(X, y)
     end = time.time()
     traintime = end-start
+
+    dump(sgc, f'../sensing_data/models/sgd_{dataset}_{labels}.joblib')
+    print("Saved XGB to disk")
 
     print("Predicting...")
     start = time.time()
@@ -169,7 +183,7 @@ def sgdc(X, y, X_test, y_test):
             i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
-def neural(X_train, y_train, X_test, y_test):
+def neural(X_train, y_train, X_test, y_test, dataset, labels, n_classes):
     input_shape = X_train.shape[1]
 
     y_train = y_train - 1
@@ -183,24 +197,34 @@ def neural(X_train, y_train, X_test, y_test):
 
     dnn = Sequential()
     # Define DNN structure
-    dnn.add(Dense(32, input_dim=input_shape, activation='elu'))
-    dnn.add(Dense(32, input_dim=input_shape, activation='elu'))
+    dnn.add(Dense(64, input_dim=input_shape, activation='relu'))
+    dnn.add(Dense(128, input_dim=input_shape, activation='relu'))
+    dnn.add(Dense(128, input_dim=input_shape, activation='relu'))
     dnn.add(Dropout(0.2))
     dnn.add(Dense(units=n_classes, activation='softmax'))
 
     dnn.compile(
         loss='categorical_crossentropy',
-        optimizer='Nadam',
+        optimizer='Adam',
         metrics=['accuracy']
     )
     dnn.summary()
 
+    es = EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=5, verbose=0, mode='auto')
     print("Fitting Keras DNN...")
     start = time.time()
     dnn.fit(X_train, y_train_onehot,
-            epochs=20, validation_split=0.2, class_weight=class_weights)
+            epochs=32, validation_split=0.2, class_weight=class_weights, callbacks=[es])
     end = time.time()
     traintime = end-start
+
+    # serialize model to YAML
+    model_yaml = dnn.to_yaml()
+    with open(f"../sensing_data/models/dnn_tf_{dataset}_{labels}.yaml", "w") as yaml_file:
+        yaml_file.write(model_yaml)
+    # serialize weights to HDF5
+    dnn.save_weights("../sensing_data/models/dnn_tf_{dataset}_{labels}.h5")
+    print("Saved DNN to disk")
 
     print("Predicting...")
     start = time.time()
@@ -246,12 +270,12 @@ def get_metrics(y_pred, y_true):
     return kappa, report
 
 
-def main(argv):
-    X, y, X_test, y_test = get_Data()
+def run_test(dataset, labels, n_classes):
+    X, y, X_test, y_test = get_Data(labels)
 
-    xgbc(X, y, X_test, y_test)
+    xgbc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    forest(X, y, X_test, y_test)
+    forest(X, y, X_test, y_test, dataset, labels, n_classes)
 
     print("Normalization for SVMs and DNN: Loading...")
     normalizer = preprocessing.Normalizer().fit(X)
@@ -259,14 +283,30 @@ def main(argv):
     X_test = normalizer.transform(X_test)
     print("Done!")
 
-    sgdc(X, y, X_test, y_test)
+    sgdc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    svmc(X, y, X_test, y_test)
+    svmc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    neural(X, y, X_test, y_test)
+    neural(X, y, X_test, y_test, dataset, labels, n_classes)
 
     # knn(X, y, X_test, y_test)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    # DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3, timeseries dem canny edge 4
+    # LABELS codes: estruturas 1, estradas 2, estrutura separada 3, estrada e estrutura 4
+    # write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME', 'FSELECTOR', 'NFEATURES'])
+
+    dss = [1,2,3,4]
+    
+    lbs = [1,3,4]
+    ncls = [3,5,4]
+
+    dataset = 1
+    labels = 3
+    n_classes = 5
+
+    # for idx, label in enumerate(lbs):
+    #     print(f"Running label test: {label}")
+    #     run_test(dataset, label, ncls[idx])
+    run_test(dataset, lbs[1], ncls[1])
