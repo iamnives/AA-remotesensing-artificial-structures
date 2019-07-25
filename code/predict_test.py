@@ -20,6 +20,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from joblib import dump, load
 
 import gdal
+from sklearn import preprocessing
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -29,16 +30,16 @@ DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
 TS1_FOLDER = DS_FOLDER + "t1stats/"
 
-OUT_RASTER = DS_FOLDER + "results/roads_test.tif"
+OUT_RASTER = DS_FOLDER + "results/neural_test.tif"
+
 def test_pred():
     start = time.time()
-    X, y, pic_shape = data.load_prediction(ratio=1, normalize=False)
+    X, y, shape = data.load_prediction(ratio=1, normalize=False, osm_roads=False, split_struct=False)
 
-    viz.createGeotiff(OUT_RASTER, y, DS_FOLDER + "ref.tif", gdal.GDT_UInt16)
+    normalizer = preprocessing.Normalizer().fit(X)
+    X = normalizer.transform(X)
+    
 
-    end=time.time()
-    elapsed=end-start
-    print("Run time: " + str(timedelta(seconds=elapsed)))
 
 if __name__ == '__main__':   
     test_pred()

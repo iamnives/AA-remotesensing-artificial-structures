@@ -186,9 +186,9 @@ def neural(X_train, y_train, X_test, y_test, dataset, labels, n_classes):
 
     dnn = Sequential()
     # Define DNN structure
-    dnn.add(Dense(64, input_dim=input_shape, activation='relu'))
-    dnn.add(Dense(128, input_dim=input_shape, activation='relu'))
-    dnn.add(Dense(128, input_dim=input_shape, activation='relu'))
+    dnn.add(Dense(256, input_dim=input_shape, activation='relu'))
+    dnn.add(Dense(512, input_dim=input_shape, activation='relu'))
+    dnn.add(Dense(512, input_dim=input_shape, activation='relu'))
     dnn.add(Dropout(0.2))
     dnn.add(Dense(units=n_classes, activation='softmax'))
 
@@ -212,7 +212,7 @@ def neural(X_train, y_train, X_test, y_test, dataset, labels, n_classes):
     with open(f"../sensing_data/models/dnn_tf_{dataset}_{labels}.yaml", "w") as yaml_file:
         yaml_file.write(model_yaml)
     # serialize weights to HDF5
-    dnn.save_weights("../sensing_data/models/dnn_tf_{dataset}_{labels}.h5")
+    dnn.save_weights(f"../sensing_data/models/dnn_tf_{dataset}_{labels}.h5")
     print("Saved DNN to disk")
 
     print("Predicting...")
@@ -232,7 +232,6 @@ def knn(X, y, X_test, y_test):
     neigh = KNeighborsClassifier(n_neighbors=3)
 
     print("Fitting SVM...")
-    # svm cant handle full training data
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=20000, train_size=100_000, stratify=y)
 
@@ -262,9 +261,9 @@ def get_metrics(y_pred, y_true):
 def run_test(dataset, labels, n_classes):
     X, y, X_test, y_test = get_Data(labels)
 
-    xgbc(X, y, X_test, y_test, dataset, labels, n_classes)
+    # xgbc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    forest(X, y, X_test, y_test, dataset, labels, n_classes)
+    # forest(X, y, X_test, y_test, dataset, labels, n_classes)
 
     print("Normalization for SVMs and DNN: Loading...")
     normalizer = preprocessing.Normalizer().fit(X)
@@ -272,13 +271,13 @@ def run_test(dataset, labels, n_classes):
     X_test = normalizer.transform(X_test)
     print("Done!")
 
-    sgdc(X, y, X_test, y_test, dataset, labels, n_classes)
+    # sgdc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    svmc(X, y, X_test, y_test, dataset, labels, n_classes)
+    # svmc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    neural(X, y, X_test, y_test, dataset, labels, n_classes)
+    # neural(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    # knn(X, y, X_test, y_test)
+    knn(X, y, X_test, y_test)
 
 
 if __name__ == "__main__":
@@ -292,10 +291,8 @@ if __name__ == "__main__":
     ncls = [3,5,4]
 
     dataset = 1
-    labels = 3
-    n_classes = 5
 
     # for idx, label in enumerate(lbs):
     #     print(f"Running label test: {label}")
     #     run_test(dataset, label, ncls[idx])
-    run_test(dataset, lbs[1], ncls[1])
+    run_test(dataset, lbs[0], ncls[0])

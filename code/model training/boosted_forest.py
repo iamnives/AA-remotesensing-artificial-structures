@@ -31,9 +31,9 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_TEST_classification.tiff"
+    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_TEST_classification"
+    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "/ignored/static/clipped_sentinel2_B08.vrt"
@@ -74,7 +74,7 @@ def main(argv):
     real_start = time.time()
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=road_flag, split_struct=True)
+        train_size, normalize=False, balance=False, osm_roads=road_flag, split_struct=False)
 
     start = time.time()
 
@@ -130,7 +130,7 @@ def main(argv):
 
     # Testing trash
     X, y, shape = data.load_prediction(
-        ratio=1, normalize=False, osm_roads=road_flag, split_struct=True)
+        ratio=1, normalize=False, osm_roads=road_flag, split_struct=False)
 
     start_pred = time.time()
     # batch test
