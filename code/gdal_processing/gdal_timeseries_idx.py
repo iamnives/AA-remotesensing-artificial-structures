@@ -9,7 +9,7 @@ from utils.visualization import createGeotiff
 from tqdm import tqdm
 
 #inicialize data location
-ROI = "vila-de-rei/"
+ROI = "arbitrary/"
 SRC_FOLDER = "../sensing_data/" + "clipped/" + ROI + "ts/"
 DST_FOLDER =  "../sensing_data/" + "clipped/" + ROI + "ts/"
 
@@ -25,8 +25,6 @@ def ndwi(green, nir, ref):
 
 def evi(nir, red, ref, blue=None):
 	return 2.4*(nir - red) / (nir + 2.4*red + 10_000)
-
-# createGeotiff(DST_FOLDER + name, data, ref, gdal.GDT_Float32)
 
 def getBand(f):
 	refDs = gdal.Open(SRC_FOLDER + f, gdal.GA_ReadOnly)

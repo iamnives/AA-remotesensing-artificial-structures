@@ -20,6 +20,8 @@ ROI = "vila-de-rei/"
 SRC_FOLDER = DATA_FOLDER + "results/" + ROI
 SRC = SRC_FOLDER + "timeseries/"
 
+FCG_SRC= SRC_FOLDER + "fgc/"
+
 GT_SRC = SRC_FOLDER + "GT/"
 COS_SRC = DATA_FOLDER + "clipped/" + ROI
 
@@ -88,6 +90,25 @@ def main(argv):
     Returns:
         None
    """
+
+   # open rasters
+    fgc_pred = gdal.Open(
+        FCG_SRC + "rasterized_generated.tif", gdal.GA_ReadOnly)
+
+    fgc_true = gdal.Open(
+        FCG_SRC + "rasterized_gt.tif", gdal.GA_ReadOnly)
+    # get result data
+    fgc_pred = fgc_pred.GetRasterBand(1).ReadAsArray()
+    fgc_true = fgc_true.GetRasterBand(1).ReadAsArray()
+
+    fgc_true = fgc_true[:fgc_pred.shape[0], :fgc_pred.shape[1]]
+
+    print("generated vs true")
+    kappa = cohen_kappa_score(fgc_true.flatten(), fgc_pred.flatten())
+    print(f'Kappa: {kappa}')
+    print(classification_report(fgc_true.flatten(), fgc_pred.flatten()))
+    print(confusion_matrix(fgc_true.flatten(), fgc_pred.flatten()))
+    return 1
 
     # open rasters
     result_10m_boosted_split = gdal.Open(
