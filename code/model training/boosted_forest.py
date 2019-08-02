@@ -27,13 +27,13 @@ from sklearn.model_selection import train_test_split
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "arbitrary/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_classification.tiff"
+    "timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_2020_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_classification"
+    "timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_2020_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "/ignored/static/clipped_sentinel2_B08.vrt"
@@ -72,9 +72,9 @@ def main(argv):
     obj = 'multi:softmax'
 
     real_start = time.time()
-    train_size = int(19386625*0.2)
+    train_size = int(1607*1015*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=road_flag, split_struct=False)
+        train_size, normalize=False, balance=False, osm_roads=road_flag, split_struct=False, army_gt=True)
 
     start = time.time()
 
@@ -130,7 +130,7 @@ def main(argv):
 
     # Testing trash
     X, y, shape = data.load_prediction(
-        ratio=1, normalize=False, osm_roads=road_flag, split_struct=False)
+        ratio=1, normalize=False, osm_roads=road_flag, split_struct=False, army_gt=True)
 
     start_pred = time.time()
     # batch test
@@ -184,3 +184,4 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
+

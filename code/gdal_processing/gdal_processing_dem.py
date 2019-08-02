@@ -5,7 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 #inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "arbitrary/"
 
 SRC_FOLDER = DATA_FOLDER + "clipped/" + ROI
 

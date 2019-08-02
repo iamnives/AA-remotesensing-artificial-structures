@@ -106,3 +106,94 @@ weighted avg       0.99      0.99      0.99  19386625
 [[  657197   145704      301]
  [   87566 18109979     6690]
  [     292     7440   371456]]
+
+
+
+-----------------------------------------------------------
+military test full vs 10 vs 20:
+
+full res:
+
+   Training time: 0:17:21.832026
+   Kappa: 0.49045640179519123
+               precision    recall  f1-score   support
+
+            1       0.65      0.25      0.37       963
+            2       0.99      1.00      0.99     63859
+            3       0.87      0.64      0.74       422
+
+      accuracy                           0.98     65244
+   macro avg       0.84      0.63      0.70     65244
+   weighted avg       0.98      0.98      0.98     65244
+
+   [[  245   718     0]
+   [  132 63688    39]
+   [    0   154   268]]
+
+   error statistics:
+   Analyzed field: area
+
+   Count: 12087
+
+   Unique values: 29
+
+   NULL (missing) values: 0
+
+   Minimum value: 100.0
+
+   Maximum value: 4502.0
+
+   Range: 4402.0
+
+   Sum: 2169432.0
+
+   Mean value: 179.48473566641846 <----- important!
+
+   Median value: 100.0 <----- important!
+
+   Standard deviation: 170.27037345719657 <----- important!
+
+   Coefficient of Variation: 0.9486621401256804
+
+   Minority (rarest occurring value): 1501.0
+
+   Majority (most frequently occurring value): 100.0
+
+-----------------------------------------------------------
+
+10 por 10: 
+Training time: 0:12:04.867668
+Kappa: 0.5095955554524667
+              precision    recall  f1-score   support
+
+         1.0       0.62      0.28      0.39       872
+         2.0       0.99      1.00      0.99     63950
+         3.0       0.83      0.64      0.73       422
+
+    accuracy                           0.99     65244
+   macro avg       0.82      0.64      0.70     65244
+weighted avg       0.98      0.99      0.98     65244
+
+[[  248   624     0]
+ [  149 63747    54]
+ [    0   151   271]]
+
+-----------------------------------------------------------
+ 20 por 20:
+
+   Training time: 0:20:06.183381
+   Kappa: 0.6275772658526202
+               precision    recall  f1-score   support
+
+            1       0.68      0.41      0.51       474
+            2       0.99      1.00      1.00     64351
+            3       0.86      0.67      0.75       419
+
+      accuracy                           0.99     65244
+   macro avg       0.85      0.69      0.75     65244
+   weighted avg       0.99      0.99      0.99     65244
+
+   [[  192   282     0]
+   [   89 64217    45]
+   [    0   138   281]]
+   
