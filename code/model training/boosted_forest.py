@@ -27,16 +27,16 @@ from sklearn.model_selection import train_test_split
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "arbitrary/"
+ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_2020_classification.tiff"
+    "timeseries/xgb/boosted_20px_static_group2_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/boosted_20px_ts_s1_s2_dem_idx_group1_2020_classification"
+    "timeseries/xgb/boosted_20px_static_group2_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
-    "/ignored/static/clipped_sentinel2_B08.vrt"
+    "ignored/static/clipped_sentinel2_B08.vrt"
 
 def str_2_bool(v):
     if isinstance(v, bool):
@@ -72,9 +72,14 @@ def main(argv):
     obj = 'multi:softmax'
 
     real_start = time.time()
-    train_size = int(1607*1015*0.2)
+    
+    split_struct=True
+    osm_roads=False
+
+    train_size = int(19386625*0.2)
+    # train_size = int(1607*1015*0.2)
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=road_flag, split_struct=False, army_gt=True)
+        train_size, normalize=False, balance=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
 
     start = time.time()
 
@@ -125,12 +130,12 @@ def main(argv):
     print(classification_report(y_test, y_pred))
     print(confusion_matrix(y_test, y_pred))
 
-    dump(forest, '../sensing_data/models/boosted.joblib')
+    dump(forest, '../sensing_data/models/boosted_timeseries_group2.joblib')
     print("Saved model to disk")
 
     # Testing trash
     X, y, shape = data.load_prediction(
-        ratio=1, normalize=False, osm_roads=road_flag, split_struct=False, army_gt=True)
+        ratio=1, normalize=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
 
     start_pred = time.time()
     # batch test
@@ -162,13 +167,15 @@ def main(argv):
     print("Creating uncertainty matrix...")
     start_matrix = time.time()
 
-    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 3))
+    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 5))
 
-    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura.tiff",
+    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_urbana.tiff",
                       y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
-    # viz.createGeotiff(OUT_PROBA_RASTER + "estrada.tiff",
-    #                   y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "restante.tiff",
+    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_rural.tiff",
+                       y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+    viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
+                        y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
+    viz.createGeotiff(OUT_PROBA_RASTER + "natural.tiff",
                       y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
                       y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)

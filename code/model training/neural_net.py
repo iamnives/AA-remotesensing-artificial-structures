@@ -33,18 +33,22 @@ ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/neural_20px_ts_s1_s2_dem_idx_group1_classification.tiff"
+    "/static/ann/neural_20px_static_group3_classification.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
-    "/ignored/static/clipped_sentinel2_B03.vrt"
+    "/ignored/static/clipped_sentinel2_B08.vrt"
 
 def model(dfs):
     start = time.time()
     train_size = int(19386625*0.2)
+
+    split_struct=False
+    osm_roads=True
+
     X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False)
+        train_size, normalize=True, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
 
     input_shape = X_train.shape[1]
-    logits = 3
+    logits = 4
 
     y_train = y_train - 1
     y_test = y_test - 1
@@ -85,14 +89,14 @@ def model(dfs):
 
     # serialize model to YAML
     model_yaml = dnn.to_yaml()
-    with open("../sensing_data/models/dnn_tf.yaml", "w") as yaml_file:
+    with open("../sensing_data/models/dnn_tf_static_group3.yaml", "w") as yaml_file:
         yaml_file.write(model_yaml)
     # serialize weights to HDF5
-    dnn.save_weights("../sensing_data/models/dnn_tf.h5")
+    dnn.save_weights("../sensing_data/models/dnn_tf_static_group3.h5")
     print("Saved model to disk")
 
     # Testing trash
-    X, y, shape = data.load_prediction(ratio=1, normalize=False, osm_roads=False, split_struct=False)
+    X, y, shape = data.load_prediction(ratio=1, normalize=True, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
     print(X.shape, y.shape)
 
     y_pred = dnn.predict(X)
@@ -106,7 +110,6 @@ def model(dfs):
     yr = y_pred.reshape(shape)
 
     viz.createGeotiff(OUT_RASTER, yr, REF_FILE, gdal.GDT_Byte)
-
 
     end = time.time()
     elapsed = end-start
@@ -133,7 +136,7 @@ def predict():
 
     dnn_pred.summary()
 
-    X, y, shape = data.load_prediction(ratio=1, normalize=False, osm_roads=False, split_struct=False)
+    X, y, shape = data.load_prediction(ratio=1, normalize=False, osm_roads=False, split_struct=False, army_gt=False)
 
     normalizer = preprocessing.Normalizer().fit(X)
     X = normalizer.transform(X)
@@ -152,5 +155,5 @@ def predict():
 
 
 if __name__ == "__main__":
-    predict()
-    #main(sys.argv)
+    #predict()
+    main(sys.argv)

@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "arbitrary/"
+ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
@@ -181,12 +181,12 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
 
         X[~np.isfinite(X)] = -1
 
-        if normalize:
-            normalizer = preprocessing.Normalizer().fit(X)
-            X = normalizer.transform(X)
-
         print("Saving data to file cache...")
         np.save(CACHE_FOLDER + "pred_data.npy", X)
+
+    if normalize:
+        normalizer = preprocessing.Normalizer().fit(X)
+        X = normalizer.transform(X)
 
     labelDS = gdal.Open(
         DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
@@ -203,7 +203,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         roads = labelDS.GetRasterBand(1).ReadAsArray()[
             :shape[0], :shape[1]].flatten()
         y[roads == 4] = roads[roads == 4]
-        maping_f = _road_map
+        maping_f = _road_and_map
 
     if split_struct:
             maping_f = _class_split_map
@@ -310,17 +310,15 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     isTrain = np.nonzero(cos_bands)
     y = cos_bands[isTrain]
 
-    if osm_roads:
-        roads_ds = gdal.Open(
-            DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-        roads = roads_ds.GetRasterBand(1).ReadAsArray()    
-        roads = roads[isTrain]
-
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
 
     if osm_roads:
+        roads_ds = gdal.Open(
+            DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+        roads = roads_ds.GetRasterBand(1).ReadAsArray()    
+        roads = roads[isTrain]
         y[roads == 4] = roads[roads == 4]
         maping_f = _road_and_map
 

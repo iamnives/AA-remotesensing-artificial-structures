@@ -21,23 +21,27 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/forest_20px_ts_s1_s2_dem_idx_classification.tiff"
+    "static/rf/forest_20px_static_group3_classification.tiff"
 
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/forest_20px_ts_s1_s2_dem_idx_classification_proba_"
+    "static/rf/forest_20px_static_group3_classification_proba_"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
-    "/ignored/static/clipped_sentinel2_B08.vrt"
+    "ignored/static/clipped_sentinel2_B08.vrt"
 
 OUT_FEATURES = DATA_FOLDER + "results/" + ROI + \
-    "/timeseries/forest_20px_ts_s1_s2_dem_idx_features.pdf"
+    "static/rf/forest_20px_static_group3_features.pdf"
 
 
 def main(argv):
     real_start = time.time()
     train_size = int(19386625*0.2)
+
+    split_struct=False
+    osm_roads=True
+
     X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False)
+        train_size, normalize=False, balance=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
 
     start = time.time()
     # Build a forest and compute the feature importances
@@ -61,30 +65,17 @@ def main(argv):
     print(classification_report(y_test, y_pred))
     print(confusion_matrix(y_test, y_pred))
 
-    importances = forest.feature_importances_
-    indices = np.argsort(importances)[::-1]
-    # Plot the feature importances of the forest
-    plt.figure()
-    plt.title("Feature importances")
-    plt.bar(range(X.shape[1]), importances[indices],
-            color="c", align="center")
-    plt.xticks(range(X.shape[1]), data.feature_map(
-        indices), rotation='90', horizontalalignment="right")
-    plt.xlim([-1, X.shape[1]])
-    plt.show()
-    
-    plt.savefig(OUT_FEATURES)
-
-    dump(forest, '../sensing_data/models/forest.joblib')
+    dump(forest, '../sensing_data/models/forest_static_group3.joblib')
     print("Saved model to disk")
 
-    # Testing trash
-    X, y, shape = data.load_prediction(ratio=1, normalize=False)
+    X, y, shape = data.load_prediction(ratio=1, normalize=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
     
     start_pred = time.time()
-    y_pred_proba = forest.predict_proba(X)
-    y_pred_classes = np.array(
-        [np.argmax(yi, axis=-1) + 1 for yi in tqdm(y_pred_proba)])
+    y_pred_classes = forest.predict(X)
+
+    # y_pred_proba = forest.predict_proba(X)
+    # y_pred_classes = np.array(
+    #     [np.argmax(yi, axis=-1) + 1 for yi in tqdm(y_pred_proba)])
     print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
     kappa = cohen_kappa_score(y, y_pred_classes)
@@ -98,16 +89,16 @@ def main(argv):
     print("Creating uncertainty matrix...")
     start_matrix = time.time()
 
-    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 3))
+    # y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 3))
 
-    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura.tiff",
-                      y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
-    # viz.createGeotiff(OUT_PROBA_RASTER + "estrada.tiff",
+    # viz.createGeotiff(OUT_PROBA_RASTER + "estrutura.tiff",
+    #                   y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
+    # # viz.createGeotiff(OUT_PROBA_RASTER + "estrada.tiff",
+    # #                   y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+    # viz.createGeotiff(OUT_PROBA_RASTER + "restante.tiff",
     #                   y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "restante.tiff",
-                      y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
-                      y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
+    # viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
+    #                   y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
 
     end = time.time()
     elapsed = end-start_matrix

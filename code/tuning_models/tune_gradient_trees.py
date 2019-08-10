@@ -25,7 +25,7 @@ def model(dfs):
     
     train_size = int(19386625*0.05)
     X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False)
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False, army_gt=True)
         
     start = time.time()
     print(f'Tuning on {X_train.shape}')
