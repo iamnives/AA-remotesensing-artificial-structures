@@ -69,6 +69,9 @@ def reverse_class_map(u):
     }
     return np.array([text_classes[x] for x in u])
 
+def _army_map(X):
+    return X
+
 def _class_map(x):  
     if x >= 1 and x <= 13:
         return 1
@@ -128,7 +131,7 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=False, convolve=False, split_struct=False):
+def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -149,7 +152,7 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         print("Trying to load cached data...")
         X = np.load(CACHE_FOLDER + "pred_data.npy")
         print("Using cached data...")
-    except FileNotFoundError:
+    except Exception:
         print("Failed to load cached data...")
         print("Reconstructing data...")
         X = []
@@ -178,12 +181,12 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
 
         X[~np.isfinite(X)] = -1
 
-        if normalize:
-            normalizer = preprocessing.Normalizer().fit(X)
-            X = normalizer.transform(X)
-
         print("Saving data to file cache...")
         np.save(CACHE_FOLDER + "pred_data.npy", X)
+
+    if normalize:
+        normalizer = preprocessing.Normalizer().fit(X)
+        X = normalizer.transform(X)
 
     labelDS = gdal.Open(
         DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
@@ -200,11 +203,14 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         roads = labelDS.GetRasterBand(1).ReadAsArray()[
             :shape[0], :shape[1]].flatten()
         y[roads == 4] = roads[roads == 4]
-        maping_f = _road_map
+        maping_f = _road_and_map
 
     if split_struct:
             maping_f = _class_split_map
 
+    if army_gt:
+        maping_f = _army_map
+        
     if map_classes:
         y = np.array([maping_f(yi) for yi in tqdm(y)])
 
@@ -231,13 +237,13 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=False, convolve=False, split_struct=False):
+def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=False, convolve=False, army_gt=False, split_struct=False):
 
     try:
         print("Trying to load cached data...")
         X = np.load(CACHE_FOLDER + "train_data.npy")
         print("Using cached data...")
-    except FileNotFoundError:
+    except Exception:
         print("Failed to load cached data...")
         print("Reconstructing data...")
         X = []
@@ -260,9 +266,10 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
             DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
         cos_bands = cos_ds.GetRasterBand(1).ReadAsArray()[:, :]
 
-        roads_ds = gdal.Open(
-            DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-        roads = roads_ds.GetRasterBand(1).ReadAsArray()
+        if osm_roads:
+            roads_ds = gdal.Open(
+                DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+            roads = roads_ds.GetRasterBand(1).ReadAsArray()
 
         # Prepare training data (set of pixels used for training) and labels
         isTrain = np.nonzero(cos_bands)
@@ -303,21 +310,23 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     isTrain = np.nonzero(cos_bands)
     y = cos_bands[isTrain]
 
-    roads_ds = gdal.Open(
-        DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-    roads = roads_ds.GetRasterBand(1).ReadAsArray()    
-    roads = roads[isTrain]
-
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
 
     if osm_roads:
+        roads_ds = gdal.Open(
+            DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+        roads = roads_ds.GetRasterBand(1).ReadAsArray()    
+        roads = roads[isTrain]
         y[roads == 4] = roads[roads == 4]
         maping_f = _road_and_map
 
     if split_struct:
         maping_f = _class_split_map
+
+    if army_gt:
+        maping_f = _army_map
 
     if map_classes:
         print("Class Mapping: Loading...")

@@ -79,24 +79,24 @@ def main(argv):
         std = np.std(timeseries, axis=0)  # standard dev
         variance = np.sqrt(std)  # variance
 
-        d_type = gdal.GDT_Float32
+        d_type = gdal.GDT_UInt16
         if "i" in band:
-            d_type = gdal.GDT_UInt16
+            d_type = gdal.GDT_Float32
 
         viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08_20.vrt", d_type)
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
 
 
 # np.mean(a, axis=0), np.quantile(a, 0.25, axis=0),

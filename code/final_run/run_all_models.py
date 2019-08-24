@@ -34,13 +34,11 @@ def write_to_file(line):
         writer = csv.writer(f)
         writer.writerow(line)
 
-
 def get_Data(labels_test):
     train_size = int(19386625*0.2)
     X, y, X_test, y_test = data.load(
         train_size, normalize=False, balance=False, osm_roads=(labels_test==4), split_struct=(labels_test==3))
     return X, y, X_test, y_test
-
 
 def xgbc(X, y, X_test, y_test, dataset, labels, n_classes):
     boosted = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
@@ -78,7 +76,6 @@ def xgbc(X, y, X_test, y_test, dataset, labels, n_classes):
             i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
-
 def forest(X, y, X_test, y_test, dataset, labels, n_classes):
     rforest = RandomForestClassifier(n_estimators=500,
                                     min_samples_leaf=4,
@@ -107,9 +104,8 @@ def forest(X, y, X_test, y_test, dataset, labels, n_classes):
             i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
 
-
 def svmc(X, y, X_test, y_test, dataset, labels, n_classes):
-    sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734)
+    sv = svm.SVC(C=6.685338321430641, gamma=6.507029881541734, class_weight='balanced')
 
     print("Fitting SVM...")
     # svm cant handle full training data
@@ -135,7 +131,6 @@ def svmc(X, y, X_test, y_test, dataset, labels, n_classes):
         line = ['SVM', dataset, X_train.shape[0], labels, False, i, report[str(i)]['precision'], report[str(
             i)]['recall'], report[str(i)]['f1-score'], kappa, traintime, predtime, 'None', X.shape[1]]
         write_to_file(line)
-
 
 def sgdc(X, y, X_test, y_test, dataset, labels, n_classes):
 
@@ -257,13 +252,12 @@ def get_metrics(y_pred, y_true):
     report = classification_report(y_true, y_pred, output_dict=True)
     return kappa, report
 
-
 def run_test(dataset, labels, n_classes):
     X, y, X_test, y_test = get_Data(labels)
 
-    # xgbc(X, y, X_test, y_test, dataset, labels, n_classes)
+    xgbc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    # forest(X, y, X_test, y_test, dataset, labels, n_classes)
+    forest(X, y, X_test, y_test, dataset, labels, n_classes)
 
     print("Normalization for SVMs and DNN: Loading...")
     normalizer = preprocessing.Normalizer().fit(X)
@@ -271,18 +265,17 @@ def run_test(dataset, labels, n_classes):
     X_test = normalizer.transform(X_test)
     print("Done!")
 
-    # sgdc(X, y, X_test, y_test, dataset, labels, n_classes)
+    sgdc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    # svmc(X, y, X_test, y_test, dataset, labels, n_classes)
+    svmc(X, y, X_test, y_test, dataset, labels, n_classes)
 
-    # neural(X, y, X_test, y_test, dataset, labels, n_classes)
+    neural(X, y, X_test, y_test, dataset, labels, n_classes)
 
     knn(X, y, X_test, y_test)
 
-
 if __name__ == "__main__":
     # DATASET codes: static 1, timeseries(s1s2) 2, timeseries dem 3, timeseries dem canny edge 4
-    # LABELS codes: estruturas 1, estradas 2, estrutura separada 3, estrada e estrutura 4
+    # LABELS codes: estruturas 1, estrutura separada 3, estrada e estrutura 4
     # write_to_file(['MODEL', 'DATASET', 'SAMPLE', 'LABELS', 'ISROAD', 'CLASS', 'PRECISION', 'RECALL', 'F1SCORE', 'KAPPA', 'TRAINTIME', 'PREDICTTIME', 'FSELECTOR', 'NFEATURES'])
 
     dss = [1,2,3,4]

@@ -15,7 +15,7 @@ ROI = "arbitrary/"
 SRC = DATA_FOLDER + "clipped/" + ROI
 SRC_FOLDER = SRC + "ts1/"
 
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/t1stats/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "t1stats/"
 
 def pairwise(iterable):
     "s -> (s0, s1), (s2, s3), (s4, s5), ..."
@@ -39,16 +39,18 @@ def main(argv):
         raster_ds = gdal.Open(SRC_FOLDER + vh, gdal.GA_ReadOnly)
         vh_data = raster_ds.GetRasterBand(1).ReadAsArray()
         vv_vh_data = np.divide(vv_data, vh_data)
-        viz.createGeotiff(SRC_FOLDER + vv.split(".")[0] +"VH.img", vv_vh_data,
+        viz.createGeotiff(SRC_FOLDER + vv.split(".")[0] +"VH.tif", vv_vh_data,
                           "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
 
     src_dss = [f for f in os.listdir(SRC_FOLDER) if (
     ".jp2" in f) or (".tif" in f) or (".img" in f)]
     src_dss.sort()
 
+    # 3clipped_subset_2_of_S1A_IW_GRDH_1SDV_20150706T182705_20150706T182730_006694_008F3B_B500GammaVH
     for f in src_dss:
         try:
-            bands[f.split("_")[2].split(".")[0]].append(SRC_FOLDER + f)
+            key = f.split("_")[12].split(".")[0][-2:]
+            bands[key].append(SRC_FOLDER + f)
         except KeyError:
             print("ignoring")
 
@@ -60,6 +62,7 @@ def main(argv):
     for b in tqdm(bands):
         # change to np array (0,m) when possible timeseries.append([bandsData], axis=0), or faster (n,m) -> a[0..n] = [1,2,...]
         timeseries = []
+        
         if(len(bands[b]) > 0):
             # Open raster dataset
             for raster in bands[b]:
@@ -69,33 +72,33 @@ def main(argv):
                 # static fix for clip mismatch problem
                 timeseries.append(bands_data[:ref_shape[0], :ref_shape[1]])
 
-        timeseries = np.array(timeseries)
-        timeseries[~np.isfinite(timeseries)] = 0
+            timeseries = np.array(timeseries)
+            timeseries[~np.isfinite(timeseries)] = 0
 
-        # Using quartiles, change to 0.05 quantiles later if load isn't too much...
-        mean_ts = np.mean(timeseries, axis=0)  # mean
-        q0 = np.quantile(timeseries, 0.00, axis=0)  # minimum
-        q1 = np.quantile(timeseries, 0.25, axis=0)  # first quantile
-        q2 = np.quantile(timeseries, 0.50, axis=0)  # median
-        q3 = np.quantile(timeseries, 0.75, axis=0)  # third quantile
-        q4 = np.quantile(timeseries, 1.0, axis=0)  # maximum
-        std = np.std(timeseries, axis=0)  # standard dev
-        variance = np.sqrt(std)  # variance
+            # Using quartiles, change to 0.05 quantiles later if load isn't too much...
+            mean_ts = np.mean(timeseries, axis=0)  # mean
+            q0 = np.quantile(timeseries, 0.00, axis=0)  # minimum
+            q1 = np.quantile(timeseries, 0.25, axis=0)  # first quantile
+            q2 = np.quantile(timeseries, 0.50, axis=0)  # median
+            q3 = np.quantile(timeseries, 0.75, axis=0)  # third quantile
+            q4 = np.quantile(timeseries, 1.0, axis=0)  # maximum
+            std = np.std(timeseries, axis=0)  # standard dev
+            variance = np.sqrt(std)  # variance
 
-        viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-        viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-        viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-        viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-        viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-        viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
-        viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+            viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
+                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
 
 if __name__ == "__main__":
     main(sys.argv)

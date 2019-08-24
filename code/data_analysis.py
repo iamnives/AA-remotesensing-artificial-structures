@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import gdal
 
@@ -11,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.model_selection import StratifiedShuffleSplit
 
-from utils.data import _class_map, _class_split_map
+from utils import data
 import scipy.stats as stats
 from tqdm import tqdm
 
@@ -22,43 +23,50 @@ DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
 TS1_FOLDER = DS_FOLDER + "t1stats/"
 
-train_size = int(19386625*0.20)
+DS_PLOT_FOLDER = DATA_FOLDER + "results/" + ROI + "static/data_plots/group2/"
 
-labelDS = gdal.Open(DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-labelBands = labelDS.GetRasterBand(1).ReadAsArray()[:, :]
+train_size = int(19386625*0.2)
+X, y, _, _ = data.load(
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=True, army_gt=False)
 
-labelDS = gdal.Open(DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-roads = labelDS.GetRasterBand(1).ReadAsArray()
-isTrain = np.nonzero(labelBands)
+def data_dist():
+    unique, counts = np.unique(y, return_counts=True)
+    barlist=plt.bar(unique, counts)
+    barlist[0].set_color('tab:orange')
+    barlist[1].set_color('tab:purple')
+    barlist[2].set_color('tab:green')
+    barlist[3].set_color('tab:cyan')
 
-y = labelBands[isTrain]
-roads = roads[isTrain]
-y_roads = labelBands[isTrain]
+    print("NOOSM", unique, counts)
+    plt.xticks((1, 2, 3, 4), ('Estrutura', 'Estrada', 'Natural', 'Água'))
+    plt.title('')
+    plt.xlabel('Classe')
+    plt.ylabel('Amostras')
 
-y = np.array([_class_split_map(yi) for yi in tqdm(y)])
-# y_roads[roads == 4] = roads[roads == 4]
-# y_roads = np.array([_class_map(yi) for yi in tqdm(y_roads)])
+    plt.show()
 
-# Split the dataset in two equal parts
-_, _, y_train, _ = train_test_split(
-    y, y, train_size=0.2, stratify=y, random_state=42)
+X_dense = X[y == 1]
+X_rural = X[y == 1] 
+X_estrutura = X[y == 1] 
 
-# # Split the dataset in two equal parts
-# _, _, y_train_roads, _ = train_test_split(
-#     y_roads, y_roads, train_size=0.2, stratify=y_roads, random_state=42)
+X_natural = X[y == 2]
+X_agua = X[y == 3]
 
-unique, counts = np.unique(y_train, return_counts=True)
-barlist=plt.bar(unique, counts)
-barlist[0].set_color('tab:orange')
-barlist[1].set_color('tab:red')
-barlist[2].set_color('tab:purple')
-barlist[3].set_color('tab:green')
-barlist[4].set_color('tab:cyan')
+feature_names = data.get_features()
 
-print("NOOSM", unique, counts)
-plt.xticks((1, 2, 3, 4, 5), ('Estrutura - alta densidade', 'Estrutura - baixa densidade', 'Restante', 'Natural', 'Água'))
-plt.title('')
-plt.xlabel('Classe')
-plt.ylabel('Amostras')
+# extract wat we want to evaluate
+for idx, feature in enumerate(feature_names):
+    feature_est_dense = X_dense[:,idx]
+    feature_est_rural = X_rural[:,idx]
+    feature_est = X_estrutura[:,idx]
 
-plt.show()
+    feature_nat = X_natural[:,idx]
+    feature_wat = X_agua[:,idx]
+
+    data = [feature_est_dense, feature_est_rural, feature_est, feature_nat, feature_wat]
+    fig1, ax1 = plt.subplots()
+    ax1.set_title(f'Box Plot of attribute: {feature}')
+    ax1.boxplot(data, showfliers=False)
+    plt.xticks([1, 2, 3, 4, 5], ['Estrutura urbana', 'Estrutura rural' , 'Outras estruturas' ,'Natural', 'Água'])
+    plt.xticks(rotation=45, ha='right')
+    plt.savefig(DS_PLOT_FOLDER + f'{feature}.pdf', bbox_inches='tight')
