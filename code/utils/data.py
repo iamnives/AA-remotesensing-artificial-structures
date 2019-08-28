@@ -131,7 +131,7 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False):
+def load_prediction(ratio=1, normalize=None, map_classes=True, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -184,9 +184,8 @@ def load_prediction(ratio=1, normalize=True, map_classes=True, binary=False, osm
         print("Saving data to file cache...")
         np.save(CACHE_FOLDER + "pred_data.npy", X)
 
-    if normalize:
-        normalizer = preprocessing.Normalizer().fit(X)
-        X = normalizer.transform(X)
+    if normalize is not None:
+        X = normalize.transform(X)
 
     labelDS = gdal.Open(
         DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
@@ -346,6 +345,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     X_train[~np.isfinite(X_train)] = -1
     X_test[~np.isfinite(X_test)] = -1
 
+    normalizer = None
     if normalize:
         print("Normalization: Loading...")
         normalizer = preprocessing.Normalizer().fit(X_train)
@@ -360,4 +360,5 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         X_train, y_train = smt.fit_sample(X_train, y_train)
         print("Features array shape after balance: " + str(X_train.shape))
     print("Dataset loaded!")
-    return X_train, y_train, X_test, y_test
+
+    return X_train, y_train, X_test, y_test, normalizer

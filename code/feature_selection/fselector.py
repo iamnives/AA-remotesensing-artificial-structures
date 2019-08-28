@@ -66,7 +66,7 @@ class Fselector:
             return sfm
 
 
-def importances_main(argv):
+def importances_test(argv):
     imps = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]
 
     n_classes = 3
@@ -154,10 +154,10 @@ def importances_main(argv):
 
 def main(argv):
 
-    enet = ElasticNetCV(l1_ratio=np.geomspace(0.1,1) , normalize=False, cv=5, copy_X=True, n_jobs=-1)
+    enet = ElasticNetCV(l1_ratio=np.geomspace(0.1,1), normalize=False, cv=5, copy_X=True, n_jobs=-1)
     n_classes = 3
 
-    train_size = int(19386625*0.2)
+    train_size = int(19386625*0.05)
     X, y, X_test, y_test = data.load(
         train_size, normalize=True, balance=False, osm_roads=False, split_struct=False)
 
@@ -167,7 +167,132 @@ def main(argv):
     print(f"L1 ratio: {enet.l1_ratio_}")
     print(f"Iterations: {enet.n_iter_}")
 
+
+def elastic_net_test(argv):
+    train_size = int(19386625*0.05)
+    X_sfm, y_sfm, _, _ = data.load(
+        train_size, normalize=True, balance=False, osm_roads=False, split_struct=False)
+
+    X, y, X_test, y_test = data.load(
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False)
     
+    f_names = data.get_features()
+
+    forest_transformed = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
+                                            gamma=5,
+                                            gpu_id=0,
+                                            learning_rate=0.2049732654267658,
+                                            max_depth=8,
+                                            min_child_weight=1,
+                                            max_delta_step=9.075685204314162,
+                                            n_estimators=1500,
+                                            n_jobs=-1,
+                                            objective='multi:softmax',
+                                            predictor='gpu_predictor',
+                                            tree_method='gpu_hist')
+
+    regr = ElasticNet(alpha=6.7783432762922965e-06, l1_ratio=1.0, max_iter=2000)
+    regr.fit(X_sfm, y_sfm)
+    n_classes = 3
+    
+    thold = 0.00001
+
+    sfm = SelectFromModel(regr, threshold=thold)
+    print(f"Features selected uesing SelectFromModel with threshold {sfm.threshold}." )
+    sfm.fit(X_sfm, y_sfm)
+
+    print(regr.coef_)
+
+    print(X.shape)
+    print("Transforming data...")
+    X_transf = sfm.transform(X)
+    X_test_transf = sfm.transform(X_test)
+
+    print("Fitting transformed data...")
+    print(X_transf.shape)
+
+    start = time.time()
+    forest_transformed.fit(X_transf, y)
+    traintime = time.time()-start
+
+    print("Predicting transformed...")
+    start = time.time()
+    y_pred = forest_transformed.predict(X_test_transf)
+    predtime = time.time()-start
+
+    kappa = cohen_kappa_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred, output_dict=True)
+
+    for i in list(range(1, n_classes+1)):
+        with open('./importances_score.csv', 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['ELASTIC', thold, X.shape[1], X_transf.shape[1], kappa, i, report[str(
+                i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], traintime, predtime])
+
+    plt.plot(regr.coef_, linestyle='none', marker='h', markersize=5, color='blue', label=r'Ridge; $\alpha = 6.78e-6$')
+    plt.xlabel('Índice do coeficiente',fontsize=16)
+    plt.ylabel('Magnitude dos coeficientes', fontsize=16)
+    plt.legend(fontsize=13, loc=4)
+    plt.show()
+                    
+def boruta_test(argv):
+    train_size = int(19386625*0.05)
+
+    X, y, X_test, y_test = data.load(
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False)
+    
+    f_names = data.get_features()
+    print(X.shape)
+
+    forest_transformed = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
+                                            gamma=5,
+                                            gpu_id=0,
+                                            learning_rate=0.2049732654267658,
+                                            max_depth=8,
+                                            min_child_weight=1,
+                                            max_delta_step=9.075685204314162,
+                                            n_estimators=1500,
+                                            n_jobs=-1,
+                                            objective='multi:softmax',
+                                            predictor='gpu_predictor',
+                                            tree_method='gpu_hist',
+                                            seed=47)
+
+    n_classes = 3
+    
+    imps = [100, 95, 90, 80, 70, 50]
+
+    for thold in imps:
+        print(f"Features selected using Boruta with percentile {thold}." )
+
+        sfm = BorutaPy(forest_transformed, n_estimators='auto', verbose=1, perc=thold, random_state=47)
+
+        sfm.fit(X, y)
+
+        print("Transforming data...")
+        X_transf = sfm.transform(X)
+        X_test_transf = sfm.transform(X_test)
+        print(X_transf.shape)
+
+        print("Fitting transformed data...")
+    
+        start = time.time()
+        forest_transformed.fit(X_transf, y)
+        traintime = time.time()-start
+
+        print("Predicting transformed...")
+        start = time.time()
+        y_pred = forest_transformed.predict(X_test_transf)
+        predtime = time.time()-start
+
+        kappa = cohen_kappa_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred, output_dict=True)
+
+        for i in list(range(1, n_classes+1)):
+            with open('./importances_score.csv', 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['BORUTA', thold, X.shape[1], X_transf.shape[1], kappa, i, report[str(
+                    i)]['precision'], report[str(i)]['recall'], report[str(i)]['f1-score'], traintime, predtime])
 
 if __name__ == "__main__":
-    main(sys.argv)
+    boruta_test(sys.argv)

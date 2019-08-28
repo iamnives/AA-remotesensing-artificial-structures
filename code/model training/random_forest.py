@@ -21,26 +21,26 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "static/rf/forest_20px_static_group3_classification.tiff"
+    "timeseries/rf/forest_20px_tsfull_group2_classification.tiff"
 
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "static/rf/forest_20px_static_group3_classification_proba_"
+    "timeseries/rf/forest_20px_tsfull_group2_classification_proba_"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "ignored/static/clipped_sentinel2_B08.vrt"
 
 OUT_FEATURES = DATA_FOLDER + "results/" + ROI + \
-    "static/rf/forest_20px_static_group3_features.pdf"
+    "timeseries/rf/forest_20px_tsfull_group2_features.pdf"
 
 
 def main(argv):
     real_start = time.time()
     train_size = int(19386625*0.2)
 
-    split_struct=False
-    osm_roads=True
+    split_struct=True
+    osm_roads=False
 
-    X, y, X_test, y_test = data.load(
+    X, y, X_test, y_test,_ = data.load(
         train_size, normalize=False, balance=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
 
     start = time.time()
@@ -65,10 +65,10 @@ def main(argv):
     print(classification_report(y_test, y_pred))
     print(confusion_matrix(y_test, y_pred))
 
-    dump(forest, '../sensing_data/models/forest_static_group3.joblib')
+    dump(forest, '../sensing_data/models/forest_tsfull_group2.joblib')
     print("Saved model to disk")
 
-    X, y, shape = data.load_prediction(ratio=1, normalize=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+    X, y, shape = data.load_prediction(ratio=1, normalize=None, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
     
     start_pred = time.time()
     y_pred_classes = forest.predict(X)

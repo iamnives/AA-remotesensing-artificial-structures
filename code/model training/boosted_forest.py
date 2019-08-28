@@ -31,9 +31,9 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/xgb/boosted_20px_static_group2_classification.tiff"
+    "timeseries/xgb/boosted_20px_tsfull_group2_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/xgb/boosted_20px_static_group2_classification"
+    "timeseries/xgb/boosted_20px_tsfull_group2_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "ignored/static/clipped_sentinel2_B08.vrt"
@@ -130,7 +130,7 @@ def main(argv):
     print(classification_report(y_test, y_pred))
     print(confusion_matrix(y_test, y_pred))
 
-    dump(forest, '../sensing_data/models/boosted_timeseries_group2.joblib')
+    dump(forest, '../sensing_data/models/boosted_timeseriesfull_group2.joblib')
     print("Saved model to disk")
 
     # Testing trash
@@ -174,11 +174,11 @@ def main(argv):
     viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_rural.tiff",
                        y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
-                        y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
+                        y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "natural.tiff",
-                      y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+                      y_pred_proba_reshaped[:, :, 3], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
-                      y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
+                      y_pred_proba_reshaped[:, :, 4], REF_FILE, gdal.GDT_Float32)
 
     end = time.time()
     elapsed = end-start_matrix

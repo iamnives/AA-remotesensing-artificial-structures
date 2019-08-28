@@ -23,11 +23,11 @@ DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
 TS1_FOLDER = DS_FOLDER + "t1stats/"
 
-DS_PLOT_FOLDER = DATA_FOLDER + "results/" + ROI + "static/data_plots/group2/"
+DS_PLOT_FOLDER = DATA_FOLDER + "results/" + ROI + "timeseries/data_plots/group1/"
 
 train_size = int(19386625*0.2)
 X, y, _, _ = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False, split_struct=True, army_gt=False)
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False, army_gt=False)
 
 def data_dist():
     unique, counts = np.unique(y, return_counts=True)
@@ -46,8 +46,10 @@ def data_dist():
     plt.show()
 
 X_dense = X[y == 1]
-X_rural = X[y == 1] 
-X_estrutura = X[y == 1] 
+#X_road = X[y == 2]
+
+# X_rural = X[y == 2] 
+# X_estrutura = X[y == 3] 
 
 X_natural = X[y == 2]
 X_agua = X[y == 3]
@@ -57,16 +59,19 @@ feature_names = data.get_features()
 # extract wat we want to evaluate
 for idx, feature in enumerate(feature_names):
     feature_est_dense = X_dense[:,idx]
-    feature_est_rural = X_rural[:,idx]
-    feature_est = X_estrutura[:,idx]
+#    feature_road = X_road[:,idx]
+
+#     feature_est_rural = X_rural[:,idx]
+#     feature_est = X_estrutura[:,idx]
 
     feature_nat = X_natural[:,idx]
     feature_wat = X_agua[:,idx]
 
-    data = [feature_est_dense, feature_est_rural, feature_est, feature_nat, feature_wat]
+    data = [feature_est_dense, feature_nat, feature_wat]
     fig1, ax1 = plt.subplots()
     ax1.set_title(f'Box Plot of attribute: {feature}')
     ax1.boxplot(data, showfliers=False)
-    plt.xticks([1, 2, 3, 4, 5], ['Estrutura urbana', 'Estrutura rural' , 'Outras estruturas' ,'Natural', 'Água'])
+    plt.xticks([1, 2, 3], ['Estrutura', 'Natural', 'Água'])
     plt.xticks(rotation=45, ha='right')
     plt.savefig(DS_PLOT_FOLDER + f'{feature}.pdf', bbox_inches='tight')
+    plt.close()

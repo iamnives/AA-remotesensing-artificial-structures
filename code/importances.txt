@@ -54,10 +54,11 @@ importances = [0.01089848, 0.0023375, 0.00423722, 0.01034001, 0.00214008, 0.0155
  'B02_q2.tiff' 'B02_q1.tiff' 'B02_q4.tiff' 'B02_var.tiff' 'B03_mean.tiff'
  'B03_q1.tiff' 'B03_q0.tiff' 'B02_q3.tiff']
 
-Alpha: 6.7783432762922965e-06
-Intercept: 3.9719247817993164
-L1 ratio: 1.0
-Iterations: 1000
+elasticnet:
+   Alpha: 6.7783432762922965e-06
+   Intercept: 3.9719247817993164
+   L1 ratio: 1.0
+   Iterations: 1000
 
 compare split and boosted:
 cos vs split

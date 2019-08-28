@@ -33,7 +33,7 @@ ROI = "vila-de-rei/"
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "/static/ann/neural_20px_static_group3_classification.tiff"
+    "/timeseries/ann/neural_20px_tsfull_group1_classification.tiff"
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "/ignored/static/clipped_sentinel2_B08.vrt"
 
@@ -42,13 +42,13 @@ def model(dfs):
     train_size = int(19386625*0.2)
 
     split_struct=False
-    osm_roads=True
+    osm_roads=False
 
-    X_train, y_train, X_test, y_test = data.load(
+    X_train, y_train, X_test, y_test, normalizer = data.load(
         train_size, normalize=True, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
 
     input_shape = X_train.shape[1]
-    logits = 4
+    logits = 5
 
     y_train = y_train - 1
     y_test = y_test - 1
@@ -89,14 +89,14 @@ def model(dfs):
 
     # serialize model to YAML
     model_yaml = dnn.to_yaml()
-    with open("../sensing_data/models/dnn_tf_static_group3.yaml", "w") as yaml_file:
+    with open("../sensing_data/models/dnn_tf_tsfull_group1.yaml", "w") as yaml_file:
         yaml_file.write(model_yaml)
     # serialize weights to HDF5
-    dnn.save_weights("../sensing_data/models/dnn_tf_static_group3.h5")
+    dnn.save_weights("../sensing_data/models/dnn_tf_tsfull_group1.h5")
     print("Saved model to disk")
 
     # Testing trash
-    X, y, shape = data.load_prediction(ratio=1, normalize=True, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+    X, y, shape = data.load_prediction(ratio=0.5, normalize=normalizer, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
     print(X.shape, y.shape)
 
     y_pred = dnn.predict(X)
