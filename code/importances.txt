@@ -132,33 +132,33 @@ full res:
    [    0   154   268]]
 
    error statistics:
-   Analyzed field: area
+      Analyzed field: area
 
-   Count: 12087
+      Count: 12087
 
-   Unique values: 29
+      Unique values: 29
 
-   NULL (missing) values: 0
+      NULL (missing) values: 0
 
-   Minimum value: 100.0
+      Minimum value: 100.0
 
-   Maximum value: 4502.0
+      Maximum value: 4502.0
 
-   Range: 4402.0
+      Range: 4402.0
 
-   Sum: 2169432.0
+      Sum: 2169432.0
 
-   Mean value: 179.48473566641846 <----- important!
+      Mean value: 179.48473566641846 <----- important!
 
-   Median value: 100.0 <----- important!
+      Median value: 100.0 <----- important!
 
-   Standard deviation: 170.27037345719657 <----- important!
+      Standard deviation: 170.27037345719657 <----- important!
 
-   Coefficient of Variation: 0.9486621401256804
+      Coefficient of Variation: 0.9486621401256804
 
-   Minority (rarest occurring value): 1501.0
+      Minority (rarest occurring value): 1501.0
 
-   Majority (most frequently occurring value): 100.0
+      Majority (most frequently occurring value): 100.0
 
 -----------------------------------------------------------
 
