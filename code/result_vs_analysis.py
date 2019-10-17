@@ -25,6 +25,14 @@ FCG_SRC= SRC_FOLDER + "fgc/"
 GT_SRC = SRC_FOLDER + "GT/"
 COS_SRC = DATA_FOLDER + "clipped/" + ROI
 
+OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
+    "timeseries/xgb/GT_group1_classification.tiff"
+OUT_RASTER_2 = DATA_FOLDER + "results/" + ROI + \
+    "timeseries/xgb/GT_group2_classification.tiff"
+
+REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
+    "ignored/static/clipped_sentinel2_B08.vrt"
+
 def plot_confusion_matrix(y_true, y_pred, classes,
                           normalize=True,
                           title=None,
@@ -91,24 +99,23 @@ def main(argv):
         None
    """
 
-   # open rasters
-    fgc_pred = gdal.Open(
-        FCG_SRC + "rasterized_generated.tif", gdal.GA_ReadOnly)
+#    # open rasters
+#     fgc_pred = gdal.Open(
+#         FCG_SRC + "rasterized_generated.tif", gdal.GA_ReadOnly)
 
-    fgc_true = gdal.Open(
-        FCG_SRC + "rasterized_gt.tif", gdal.GA_ReadOnly)
-    # get result data
-    fgc_pred = fgc_pred.GetRasterBand(1).ReadAsArray()
-    fgc_true = fgc_true.GetRasterBand(1).ReadAsArray()
+#     fgc_true = gdal.Open(
+#         FCG_SRC + "rasterized_gt.tif", gdal.GA_ReadOnly)
+#     # get result data
+#     fgc_pred = fgc_pred.GetRasterBand(1).ReadAsArray()
+#     fgc_true = fgc_true.GetRasterBand(1).ReadAsArray()
 
-    fgc_true = fgc_true[:fgc_pred.shape[0], :fgc_pred.shape[1]]
+#     fgc_true = fgc_true[:fgc_pred.shape[0], :fgc_pred.shape[1]]
 
-    print("generated vs true")
-    kappa = cohen_kappa_score(fgc_true.flatten(), fgc_pred.flatten())
-    print(f'Kappa: {kappa}')
-    print(classification_report(fgc_true.flatten(), fgc_pred.flatten()))
-    print(confusion_matrix(fgc_true.flatten(), fgc_pred.flatten()))
-    return 1
+#     print("generated vs true")
+#     kappa = cohen_kappa_score(fgc_true.flatten(), fgc_pred.flatten())
+#     print(f'Kappa: {kappa}')
+#     print(classification_report(fgc_true.flatten(), fgc_pred.flatten()))
+#     print(confusion_matrix(fgc_true.flatten(), fgc_pred.flatten()))
 
     # open rasters
     result_10m_boosted_split = gdal.Open(
@@ -127,8 +134,19 @@ def main(argv):
     cos = cos[:result_10m_boosted_split.shape[0], :result_10m_boosted_split.shape[1]]
 
     print("Mapping cos...")
-    cos = np.array([data._class_map(yi)
+    cos_g1 = np.array([data._class_map(yi)
                     for yi in tqdm(cos.flatten())])
+    cos_g2 = np.array([data._class_split_map(yi)
+                        for yi in tqdm(cos.flatten())])
+
+
+    viz.createGeotiff(OUT_RASTER, cos_g1.reshape(cos.shape),
+    REF_FILE, gdal.GDT_Byte)
+
+    viz.createGeotiff(OUT_RASTER_2, cos_g2.reshape(cos.shape),
+    REF_FILE, gdal.GDT_Byte)
+
+    return 1
 
     print("Mapping split...") 
     result_10m_boosted_split_mapped = np.array([split_map(yi)
