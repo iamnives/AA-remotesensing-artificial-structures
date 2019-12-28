@@ -312,6 +312,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
     maping_f = _class_map
     if binary:
         maping_f = _class_map_binary
+        print("Class Mapping: Binary...")
 
     if osm_roads:
         roads_ds = gdal.Open(
@@ -320,30 +321,39 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         roads = roads[isTrain]
         y[roads == 4] = roads[roads == 4]
         maping_f = _road_and_map
+        print("Class Mapping: Roads...")
 
     if split_struct:
         maping_f = _class_split_map
+        print("Class Mapping: Split...")
 
     if army_gt:
         maping_f = _army_map
+        print("Class Mapping: Army...")
 
     if map_classes:
         print("Class Mapping: Loading...")
         y = np.array([maping_f(yi) for yi in tqdm(y)])
         print("Class Mapping: Done!      ")
 
-    print("Train test split...")
+    print("Train validation split...")
     # Split the dataset in two equal parts
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=(int(train_size*test_size)), train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
+    X_train, x_rest, y_train, y_rest= train_test_split(
+        X, y, train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
+
+    print("Train test split...")
+    X_test, X_val, y_test, y_val= train_test_split(
+        x_rest, y_rest, test_size=(int(train_size*test_size)), train_size=(int(train_size*test_size)), stratify=y_rest, random_state=42)
 
     print("Cleaning and typing data...")
     # Prevents overflow on algoritms computations
     X_train = X_train.astype(np.float32)
     X_test = X_test.astype(np.float32)
+    X_val = X_val.astype(np.float32)
 
     X_train[~np.isfinite(X_train)] = -1
     X_test[~np.isfinite(X_test)] = -1
+    X_val[~np.isfinite(X_val)] = -1
 
     normalizer = None
     if normalize:
@@ -361,4 +371,4 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         print("Features array shape after balance: " + str(X_train.shape))
     print("Dataset loaded!")
 
-    return X_train, y_train, X_test, y_test, normalizer
+    return X_train, y_train, X_test, y_test, X_val, y_val, normalizer

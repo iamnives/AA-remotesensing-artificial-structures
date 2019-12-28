@@ -198,3 +198,19 @@ weighted avg       0.98      0.99      0.98     65244
    [   89 64217    45]
    [    0   138   281]]
    
+
+
+array(['ndwi_mean.tiff', 'B11_q4.tiff', 'B04_q3.tiff', 'ndvi_q4.tiff',
+       'B04_q4.tiff', 'ndwi_q4.tiff', 'B01_q4.tiff', 'B01_var.tiff',
+       'VV_q1.tiff', 'B04_var.tiff', 'B01_mean.tiff', 'B09_q1.tiff',
+       'B01_q2.tiff', 'VVVH_q3.tiff', 'ndwi_q2.tiff', 'VVVH_q4.tiff',
+       'B8A_mean.tiff', 'B12_var.tiff', 'B12_q2.tiff', 'B04_q2.tiff',
+       'VVVH_var.tiff', 'B8A_q1.tiff', 'VH_q2.tiff', 'VH_q4.tiff',
+       'ndwi_q1.tiff', 'ndwi_q3.tiff', 'B12_q1.tiff', 'VVVH_q0.tiff',
+       'B03_q4.tiff', 'B05_mean.tiff', 'VVVH_q1.tiff', 'B03_q2.tiff',
+       'evi_var.tiff', 'B8A_q2.tiff', 'VH_q1.tiff', 'B06_q1.tiff',
+       'B01_q1.tiff', 'VH_q3.tiff', 'B8A_var.tiff', 'VH_mean.tiff',
+       'B05_q1.tiff', 'B8A_q0.tiff', 'VVVH_q2.tiff', 'VH_q0.tiff',
+       'B07_mean.tiff', 'B12_q4.tiff', 'VVVH_mean.tiff', 'B05_q0.tiff',
+       'B11_q1.tiff', 'VH_var.tiff', 'B10_q0.tiff', 'ndwi_var.tiff',
+       'clipped_dem_slope.tif'], dtype='<U22')

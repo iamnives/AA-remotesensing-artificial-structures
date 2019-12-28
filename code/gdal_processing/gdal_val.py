@@ -11,15 +11,23 @@ from utils import visualization as viz
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "arbitrary/"
+ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
-SRC_FOLDER = SRC + "ts1/"
+
+SRC_FOLDER_S1 = SRC + "ts1/"
+SRC_FOLDER_S2 = SRC + "ts/"
 
 
 def main(argv):
     print("Validating dataset...")
-    src_dss = [f for f in os.listdir(SRC_FOLDER) if (
+    src_dss_ts1 = [SRC_FOLDER_S1 + f for f in os.listdir(SRC_FOLDER_S1) if (
         ".jp2" in f) or (".tif" in f) or (".img" in f)]
+
+    src_dss_ts2 = [SRC_FOLDER_S2 + f for f in os.listdir(SRC_FOLDER_S2) if (
+        ".jp2" in f) or (".tif" in f) or (".img" in f)]
+
+    src_dss = src_dss_ts1 + src_dss_ts2
+
     src_dss.sort()
 
     refDs = gdal.Open("../sensing_data/clipped/" + ROI +
@@ -28,14 +36,13 @@ def main(argv):
     ref_shape = band.shape
 
     for f in tqdm(src_dss):
-        refDs = gdal.Open(SRC_FOLDER + f, gdal.GA_ReadOnly)
+        refDs = gdal.Open(f, gdal.GA_ReadOnly)
         band = refDs.GetRasterBand(1).ReadAsArray()
         bshape = band.shape
         if ref_shape != bshape:
             print(f"Failed validation, raster with different shape: {f}, {bshape}")
             print(f"It may still work, but needs checking to validate results.")
-            return 1
-    print("Passed validation")
+    print("Finished validation")
 
 if __name__ == "__main__":
     main(sys.argv)

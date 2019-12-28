@@ -43,7 +43,9 @@ def model(dfs):
     print()
     print(gs.best_params_)
     print()
-
+    print(gs.best_score_)
+    print()
+    
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
 

@@ -24,8 +24,8 @@ from sklearn.model_selection import GridSearchCV
 def model(dfs):
     
     train_size = int(19386625*0.05)
-    X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False, army_gt=True)
+    X_train, y_train, X_test, y_test, X_val, y_val, normalizer = data.load(
+        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False, army_gt=False)
         
     start = time.time()
     print(f'Tuning on {X_train.shape}')
@@ -60,6 +60,8 @@ def model(dfs):
     print("Best parameters set found on development set: ")
     print()
     print(gs.best_params_)
+    print()
+    print(gs.best_score_)
     print()
 
     clf = gs.best_estimator_
