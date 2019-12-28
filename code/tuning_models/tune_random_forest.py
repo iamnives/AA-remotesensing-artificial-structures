@@ -18,13 +18,10 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 
-
-
 def model(dfs):
     start = time.time()
     train_size = 100_000
-    X_train, y_train, X_test, y_test = data.load(
-        train_size, datafiles=dfs, normalize=False, balance=False, osm_roads=True)
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, datafiles=dfs, normalize=False, osm_roads=False, split_struct=False)
 
     N_s = [500, 1000, 1500, 2000]
     min_samples_leaf = [1, 2, 4]

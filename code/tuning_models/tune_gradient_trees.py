@@ -20,12 +20,10 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 
-
 def model(dfs):
     
     train_size = int(19386625*0.05)
-    X_train, y_train, X_test, y_test, X_val, y_val, normalizer = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False, army_gt=False)
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, datafiles=dfs, normalize=False, osm_roads=False, split_struct=False)
         
     start = time.time()
     print(f'Tuning on {X_train.shape}')

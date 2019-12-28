@@ -78,8 +78,8 @@ def main(argv):
 
     train_size = int(19386625*0.2)
     # train_size = int(1607*1015*0.2)
-    X, y, X_test, y_test, _ = data.load(
-        train_size, normalize=False, balance=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+    
+    X, y, X_test, y_test, _, _, _  = data.load(train_size, normalize=False, osm_roads=osm_roads, split_struct=split_struct)
 
     start = time.time()
 

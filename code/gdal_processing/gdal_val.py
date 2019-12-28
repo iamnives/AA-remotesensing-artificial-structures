@@ -41,7 +41,6 @@ def main(argv):
         bshape = band.shape
         if ref_shape != bshape:
             print(f"Failed validation, raster with different shape: {f}, {bshape}")
-            print(f"It may still work, but needs checking to validate results.")
     print("Finished validation")
 
 if __name__ == "__main__":
