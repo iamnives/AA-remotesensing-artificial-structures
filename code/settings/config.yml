@@ -1,0 +1,22 @@
+appName: GeoML
+logLevel: WARN
+
+Data:
+  Folder: "C:/Users/amnev/Documents/AA-remotesensing-artificial-structures/sensing_data"
+  Roi: "vila-de-rei"
+  Mask: "C:/Users/amnev/Documents/AA-remotesensing-artificial-structures/vector_data/vila-de-rei/ROI.shp"
+  Static:
+    Path: "raw/static"
+  Timeseries:
+    Path: "raw/timeseries"
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: "index.handler"
+      Role:
+        Fn::GetAtt:
+          - "LambdaExecutionRole"
+          - "Arn"
+      Runtime: "python3.7"
+      Timeout: 25
+      TracingConfig:
+        Mode: "Active"

@@ -103,7 +103,7 @@ def main(argv):
         x_train_feature, _, y_train_feature, _ = train_test_split(
             X_test, y_test, test_size=0, train_size=100_000)
 
-        selector = fselector.Fselector(forest, mode="importances", thold=0.95)
+        selector = fselector.Fselector(forest, mode="importances", thold=0.80)
         transformer = selector.select(x_train_feature, y_train_feature)
 
         features = transformer.get_support()
