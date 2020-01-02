@@ -75,10 +75,6 @@ def model(dfs):
     elapsed = end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
 
-    #viz.plot_confusionmx(matrix)
-    #viz.plot_gridcv(gs.cv_results_, ["kappa"], "n_estimators", 500, 2000)
-
-
 def main(argv):
     model(None)
 

@@ -232,7 +232,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False):
+def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False):
 
     try:
         print("Trying to load cached data...")
@@ -276,8 +276,8 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         is_train = np.nonzero(cos_bands)
 
         # Create empty HxW array/matrix
-        X = np.empty((len(src_dss), len(cos_bands[is_train])))
-
+        # X = np.empty((len(src_dss), len(cos_bands[is_train])))
+        X = []
         # Get list of raster bands info as array, already indexed by labels non zero
         print("Datasets: Loading...")
         for i, raster in enumerate(tqdm(src_dss)):
@@ -286,13 +286,14 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
                 raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
                 # Extract band's data and transform into a numpy array
                 test_ds = raster_ds.GetRasterBand(1).ReadAsArray()
-                X[i] = test_ds[is_train]
+                X.append(test_ds[is_train])
 
         # dont remove transpose after loading, time sucks if you do it at load 
         # more resource heavy but it takes way less time
         print("Transposing data...")
         # Transpose attributes matrix
-        X = X.T
+        # X = X.T
+        X = np.dstack(tuple(X))[0]
 
         print("Datasets: Done!           ")
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
@@ -350,6 +351,16 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         X_test[~np.isfinite(X_test)] = -1
         X_val[~np.isfinite(X_val)] = -1
 
+        print("Saving data to file cache...")
+        np.save(CACHE_FOLDER + "train_data.npy", X_train)
+        np.save(CACHE_FOLDER + "train_labels.npy", y_train)
+
+        np.save(CACHE_FOLDER + "test_data.npy", X_test)
+        np.save(CACHE_FOLDER + "test_labels.npy", y_test)
+
+        np.save(CACHE_FOLDER + "val_data.npy", X_val)
+        np.save(CACHE_FOLDER + "val_labels.npy", y_val)
+
     normalizer = None
     if normalize:
         print("Normalization: Loading...")
@@ -358,15 +369,5 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         X_test = normalizer.transform(X_test)
         X_val = normalizer.transform(X_test)
         print("Done!")
-
-    print("Saving data to file cache...")
-    np.save(CACHE_FOLDER + "train_data.npy", X_train)
-    np.save(CACHE_FOLDER + "train_labels.npy", y_train)
-
-    np.save(CACHE_FOLDER + "test_data.npy", X_test)
-    np.save(CACHE_FOLDER + "test_labels.npy", y_test)
-
-    np.save(CACHE_FOLDER + "val_data.npy", X_val)
-    np.save(CACHE_FOLDER + "val_labels.npy", y_val)
 
     return X_train, y_train, X_test, y_test, X_val, y_val, normalizer

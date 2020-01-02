@@ -1,7 +1,0 @@
-CASE WHEN 'tunnel' = 'T' THEN '0'
-WHEN "fclass" = 'motorway' THEN '10'
-WHEN "fclass" = 'primary' THEN '7' 
-WHEN "fclass" = 'residential' THEN '5' 
-WHEN "fclass" = 'tertiary' THEN '5' 
-ELSE '0'
-END

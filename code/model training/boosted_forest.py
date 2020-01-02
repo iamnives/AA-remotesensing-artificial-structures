@@ -79,7 +79,7 @@ def main(argv):
     train_size = int(19386625*0.2)
     # train_size = int(1607*1015*0.2)
     
-    X, y, X_test, y_test, _, _, _  = data.load(train_size, normalize=False, osm_roads=osm_roads, split_struct=split_struct)
+    X_train, y_train, X_test, y_test, _, _, _  = data.load(train_size, normalize=False, osm_roads=osm_roads, split_struct=split_struct)
 
     start = time.time()
 
@@ -111,24 +111,28 @@ def main(argv):
         # feature_names = feature_names[features]
         print(features)
         print("Transforming data...")
-        print("Before: ", X.shape)
+        print("Before: ", X_train.shape)
         X = transformer.transform(X)
         X_test = transformer.transform(X_test)
-        print("After: ", X.shape)
+        print("After: ", X_train.shape)
 
     print("Fitting data...")
-    forest.fit(X, y)
+    forest.fit(X_train, y_train)
 
     end = time.time()
     elapsed = end-start
     print("Training time: " + str(timedelta(seconds=elapsed)))
 
-    y_pred = forest.predict(X_test)
+    yt_pred = forest.predict(X_train)
+    kappa = cohen_kappa_score(y_train, yt_pred)
+    print(f'Train Kappa: {kappa}')
+    print(classification_report(y_train, yt_pred))
 
+    y_pred = forest.predict(X_test)
     kappa = cohen_kappa_score(y_test, y_pred)
-    print(f'Kappa: {kappa}')
+    print(f'Validation Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
-    print(confusion_matrix(y_test, y_pred))
+    return 0
 
     dump(forest, '../sensing_data/models/boosted_test_group1.joblib')
     print("Saved model to disk")
