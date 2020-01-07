@@ -40,8 +40,8 @@ def main(argv):
     split_struct=True
     osm_roads=False
 
-    X, y, X_test, y_test,_ = data.load(
-        train_size, normalize=False, balance=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+    X_train, y_train, X_test, y_test,_,_,_ = data.load(
+        train_size, normalize=False, osm_roads=osm_roads, split_struct=split_struct)
 
     start = time.time()
     # Build a forest and compute the feature importances
@@ -52,18 +52,22 @@ def main(argv):
                                     class_weight='balanced',
                                     n_jobs=-1, verbose=1)
     print("Fitting data...")
-    forest.fit(X, y)
+    forest.fit(X_train, y_train)
 
     end = time.time()
     elapsed = end-start
     print("Training time: " + str(timedelta(seconds=elapsed)))
 
-    y_pred = forest.predict(X_test)
+    yt_pred = forest.predict(X_train)
+    kappa = cohen_kappa_score(y_train, yt_pred)
+    print(f'Train Kappa: {kappa}')
+    print(classification_report(y_train, yt_pred))
 
+    y_pred = forest.predict(X_test)
     kappa = cohen_kappa_score(y_test, y_pred)
-    print(f'Kappa: {kappa}')
+    print(f'Validation Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
-    print(confusion_matrix(y_test, y_pred))
+    return 0
 
     dump(forest, '../sensing_data/models/forest_tsfull_group2.joblib')
     print("Saved model to disk")

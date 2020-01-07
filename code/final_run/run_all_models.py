@@ -30,15 +30,15 @@ from sklearn.neighbors import KNeighborsClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 
 def write_to_file(line):
-    with open('./finalrun.csv', 'a', newline='') as f:
+    with open('./finalrun_validation.csv', 'a', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(line)
 
 def get_Data(labels_test):
     train_size = int(19386625*0.2)
-    X, y, X_test, y_test = data.load(
+    X_train, y_train, X_test, y_test, X_val, y_val, normalizer = data.load(
         train_size, normalize=False, balance=False, osm_roads=(labels_test==4), split_struct=(labels_test==3))
-    return X, y, X_test, y_test
+    return X_train, y_train, X_val, y_val
 
 def xgbc(X, y, X_test, y_test, dataset, labels, n_classes):
     boosted = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
@@ -283,9 +283,13 @@ if __name__ == "__main__":
     lbs = [1,3,4]
     ncls = [3,5,4]
 
-    dataset = 1
+    dataset = 3
+
+    X, y, X_test, y_test = get_Data(4)
+    xgbc(X, y, X_test, y_test, 3, 4, 4)
 
     # for idx, label in enumerate(lbs):
     #     print(f"Running label test: {label}")
     #     run_test(dataset, label, ncls[idx])
-    run_test(dataset, lbs[0], ncls[0])
+    #run_test(dataset, lbs[0], ncls[0])
+    print("Test ended.")

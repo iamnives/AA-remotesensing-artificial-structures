@@ -44,11 +44,11 @@ def model(dfs):
     split_struct=False
     osm_roads=False
 
-    X_train, y_train, X_test, y_test, normalizer = data.load(
-        train_size, normalize=True, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+    X_train, y_train, X_test, y_test, _, _, normalizer = data.load(
+        train_size, normalize=True, osm_roads=osm_roads, split_struct=split_struct)
 
     input_shape = X_train.shape[1]
-    logits = 5
+    logits = 3
 
     y_train = y_train - 1
     y_test = y_test - 1
@@ -79,13 +79,20 @@ def model(dfs):
     dnn.fit(X_train, y_train_onehot,
             epochs=100, validation_split=0.2, class_weight=class_weights, callbacks=[es])
 
+    yt_pred_onehot = dnn.predict(X_train)
+    yt_pred = [np.argmax(pred) for pred in yt_pred_onehot]
+
+    kappa = cohen_kappa_score(y_train, yt_pred)
+    print(f'Train Kappa: {kappa}')
+    print(classification_report(y_train, yt_pred))
+
     y_pred_onehot = dnn.predict(X_test)
     y_pred = [np.argmax(pred) for pred in y_pred_onehot]
 
     kappa = cohen_kappa_score(y_test, y_pred)
-    print(f'Kappa: {kappa}')
+    print(f'Validation Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
-
+    return 0
 
     # serialize model to YAML
     model_yaml = dnn.to_yaml()

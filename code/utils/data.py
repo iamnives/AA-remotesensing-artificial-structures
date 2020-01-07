@@ -33,8 +33,6 @@ STATIC_FOLDER = DS_FOLDER + "static/"
 CACHE_FOLDER = DS_FOLDER + "cache/"
 
 # Class to text for plotting features
-
-
 def feature_map(u):
     src_dss = [f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -49,7 +47,6 @@ def feature_map(u):
     return np.array([text_classes[x] for x in u])
 
 # Class to text for plotting and analysis, only works if map_classes = True
-
 def reverse_road_class_map(u):
     text_classes = {
         1: "Edificação artificial permanente",
@@ -60,7 +57,6 @@ def reverse_road_class_map(u):
     return np.array([text_classes[x] for x in u])
 
 # Class to text for plotting and analysis, only works if map_classes = True
-
 def reverse_class_map(u):
     text_classes = {
         1: "Edificação artificial permanente",
@@ -159,9 +155,9 @@ def load_prediction(ratio=1, normalize=None, map_classes=True, binary=False, osm
 
         for raster in tqdm(src_dss):
             # Open raster dataset
-            rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
+            raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
             # Extract band's data and transform into a numpy array
-            test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
+            test_ds = raster_ds.GetRasterBand(1).ReadAsArray()
             test_ds = test_ds[:shape[0], :shape[1]]
 
             if convolve:
@@ -236,17 +232,23 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=False, balance=False, test_size=0.2, osm_roads=False, convolve=False, army_gt=False, split_struct=False):
+def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False):
 
     try:
         print("Trying to load cached data...")
-        X = np.load(CACHE_FOLDER + "train_data.npy")
+        X_train = np.load(CACHE_FOLDER + "train_data.npy")
+        y_train = np.load(CACHE_FOLDER + "train_labels.npy")
+
+        X_test = np.load(CACHE_FOLDER + "test_data.npy")
+        y_test = np.load(CACHE_FOLDER + "test_labels.npy")
+
+        X_val = np.load(CACHE_FOLDER + "val_data.npy")
+        y_val = np.load(CACHE_FOLDER + "val_labels.npy")
         print("Using cached data...")
     except Exception:
         print("Failed to load cached data...")
         print("Reconstructing data...")
-        X = []
-
+       
         if(datafiles is None):
             src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
                 "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -271,79 +273,93 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
             roads = roads_ds.GetRasterBand(1).ReadAsArray()
 
         # Prepare training data (set of pixels used for training) and labels
-        isTrain = np.nonzero(cos_bands)
+        is_train = np.nonzero(cos_bands)
 
+        # Create empty HxW array/matrix
+        # X = np.empty((len(src_dss), len(cos_bands[is_train])))
+        X = []
         # Get list of raster bands info as array, already indexed by labels non zero
         print("Datasets: Loading...")
-        for raster in tqdm(src_dss):
+        for i, raster in enumerate(tqdm(src_dss)):
             if(("cos_50982.tif" not in raster) and ("xml" not in raster)):
                 # Open raster dataset
-                rasterDS = gdal.Open(raster, gdal.GA_ReadOnly)
+                raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
                 # Extract band's data and transform into a numpy array
-                test_ds = rasterDS.GetRasterBand(1).ReadAsArray()
+                test_ds = raster_ds.GetRasterBand(1).ReadAsArray()
+                X.append(test_ds[is_train])
 
-                if convolve:
-                    # This should do moving average try 5x5
-                    filter_kernel = [[1, 1, 1],
-                                     [1, 0, 1],
-                                     [1, 1, 1]]
-
-                    test_ds = scipy.signal.convolve2d(
-                        test_ds, filter_kernel, mode='same', boundary='fill', fillvalue=0)
-
-                X.append(test_ds[isTrain])
+        # dont remove transpose after loading, time sucks if you do it at load 
+        # more resource heavy but it takes way less time
         print("Transposing data...")
         # Transpose attributes matrix
+        # X = X.T
         X = np.dstack(tuple(X))[0]
 
         print("Datasets: Done!           ")
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
 
+        cos_ds = gdal.Open(
+            DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+        cos_bands = cos_ds.GetRasterBand(1).ReadAsArray()[:, :]
+        
+        is_train = np.nonzero(cos_bands)
+        y = cos_bands[is_train]
+
+        maping_f = _class_map
+        if binary:
+            maping_f = _class_map_binary
+            print("Class Mapping: Binary...")
+
+        if osm_roads:
+            roads_ds = gdal.Open(
+                DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+            roads = roads_ds.GetRasterBand(1).ReadAsArray()    
+            roads = roads[is_train]
+            y[roads == 4] = roads[roads == 4]
+            maping_f = _road_and_map
+            print("Class Mapping: Roads...")
+
+        if split_struct:
+            maping_f = _class_split_map
+            print("Class Mapping: Split...")
+
+        if army_gt:
+            maping_f = _army_map
+            print("Class Mapping: Army...")
+
+        if map_classes:
+            print("Class Mapping: Loading...")
+            y = np.array([maping_f(yi) for yi in tqdm(y)])
+            print("Class Mapping: Done!      ")
+
+        print("Train validation split...")
+        # Split the dataset in two equal parts
+        X_train, x_rest, y_train, y_rest= train_test_split(
+            X, y, train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
+
+        print("Train test split...")
+        X_test, X_val, y_test, y_val= train_test_split(
+            x_rest, y_rest, test_size=(int(train_size*test_size)), train_size=(int(train_size*test_size)), stratify=y_rest, random_state=42)
+
+        print("Cleaning and typing data...")
+        # Prevents overflow on algoritms computations
+        X_train = X_train.astype(np.float32)
+        X_test = X_test.astype(np.float32)
+        X_val = X_val.astype(np.float32)
+
+        X_train[~np.isfinite(X_train)] = -1
+        X_test[~np.isfinite(X_test)] = -1
+        X_val[~np.isfinite(X_val)] = -1
+
         print("Saving data to file cache...")
-        np.save(CACHE_FOLDER + "train_data.npy", X)
+        np.save(CACHE_FOLDER + "train_data.npy", X_train)
+        np.save(CACHE_FOLDER + "train_labels.npy", y_train)
 
-    cos_ds = gdal.Open(
-        DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-    cos_bands = cos_ds.GetRasterBand(1).ReadAsArray()[:, :]
-    
-    isTrain = np.nonzero(cos_bands)
-    y = cos_bands[isTrain]
+        np.save(CACHE_FOLDER + "test_data.npy", X_test)
+        np.save(CACHE_FOLDER + "test_labels.npy", y_test)
 
-    maping_f = _class_map
-    if binary:
-        maping_f = _class_map_binary
-
-    if osm_roads:
-        roads_ds = gdal.Open(
-            DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-        roads = roads_ds.GetRasterBand(1).ReadAsArray()    
-        roads = roads[isTrain]
-        y[roads == 4] = roads[roads == 4]
-        maping_f = _road_and_map
-
-    if split_struct:
-        maping_f = _class_split_map
-
-    if army_gt:
-        maping_f = _army_map
-
-    if map_classes:
-        print("Class Mapping: Loading...")
-        y = np.array([maping_f(yi) for yi in tqdm(y)])
-        print("Class Mapping: Done!      ")
-
-    print("Train test split...")
-    # Split the dataset in two equal parts
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=(int(train_size*test_size)), train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
-
-    print("Cleaning and typing data...")
-    # Prevents overflow on algoritms computations
-    X_train = X_train.astype(np.float32)
-    X_test = X_test.astype(np.float32)
-
-    X_train[~np.isfinite(X_train)] = -1
-    X_test[~np.isfinite(X_test)] = -1
+        np.save(CACHE_FOLDER + "val_data.npy", X_val)
+        np.save(CACHE_FOLDER + "val_labels.npy", y_val)
 
     normalizer = None
     if normalize:
@@ -351,14 +367,7 @@ def load(train_size, datafiles=None, normalize=True, map_classes=True, binary=Fa
         normalizer = preprocessing.Normalizer().fit(X_train)
         X_train = normalizer.transform(X_train)
         X_test = normalizer.transform(X_test)
+        X_val = normalizer.transform(X_test)
         print("Done!")
 
-    if balance:
-        print("Data balance: Loading...")
-        smt = TomekLinks(sampling_strategy='not minority',
-                         n_jobs=4, random_state=42)
-        X_train, y_train = smt.fit_sample(X_train, y_train)
-        print("Features array shape after balance: " + str(X_train.shape))
-    print("Dataset loaded!")
-
-    return X_train, y_train, X_test, y_test, normalizer
+    return X_train, y_train, X_test, y_test, X_val, y_val, normalizer

@@ -20,12 +20,10 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 
-
 def model(dfs):
     
     train_size = int(19386625*0.05)
-    X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=False, split_struct=False, army_gt=True)
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, datafiles=dfs, normalize=False, osm_roads=False, split_struct=False)
         
     start = time.time()
     print(f'Tuning on {X_train.shape}')
@@ -61,6 +59,8 @@ def model(dfs):
     print()
     print(gs.best_params_)
     print()
+    print(gs.best_score_)
+    print()
 
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
@@ -74,10 +74,6 @@ def model(dfs):
     end = time.time()
     elapsed = end-start
     print("Run time: " + str(timedelta(seconds=elapsed)))
-
-    #viz.plot_confusionmx(matrix)
-    #viz.plot_gridcv(gs.cv_results_, ["kappa"], "n_estimators", 500, 2000)
-
 
 def main(argv):
     model(None)

@@ -31,9 +31,9 @@ ROI = "vila-de-rei/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/xgb/boosted_20px_tsfull_group2_classification.tiff"
+    "timeseries/xgb/boosted_20px_tstest_group1_classification.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/xgb/boosted_20px_tsfull_group2_classification"
+    "timeseries/xgb/boosted_20px_tstest_group1_classification"
 
 REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
     "ignored/static/clipped_sentinel2_B08.vrt"
@@ -73,13 +73,13 @@ def main(argv):
 
     real_start = time.time()
     
-    split_struct=True
+    split_struct=False
     osm_roads=False
 
     train_size = int(19386625*0.2)
     # train_size = int(1607*1015*0.2)
-    X, y, X_test, y_test = data.load(
-        train_size, normalize=False, balance=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+    
+    X_train, y_train, X_test, y_test, _, _, _  = data.load(train_size, normalize=False, osm_roads=osm_roads, split_struct=split_struct)
 
     start = time.time()
 
@@ -111,26 +111,30 @@ def main(argv):
         # feature_names = feature_names[features]
         print(features)
         print("Transforming data...")
-        print("Before: ", X.shape)
+        print("Before: ", X_train.shape)
         X = transformer.transform(X)
         X_test = transformer.transform(X_test)
-        print("After: ", X.shape)
+        print("After: ", X_train.shape)
 
     print("Fitting data...")
-    forest.fit(X, y)
+    forest.fit(X_train, y_train)
 
     end = time.time()
     elapsed = end-start
     print("Training time: " + str(timedelta(seconds=elapsed)))
 
+    yt_pred = forest.predict(X_train)
+    kappa = cohen_kappa_score(y_train, yt_pred)
+    print(f'Train Kappa: {kappa}')
+    print(classification_report(y_train, yt_pred))
+
     y_pred = forest.predict(X_test)
-
     kappa = cohen_kappa_score(y_test, y_pred)
-    print(f'Kappa: {kappa}')
+    print(f'Validation Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
-    print(confusion_matrix(y_test, y_pred))
+    return 0
 
-    dump(forest, '../sensing_data/models/boosted_timeseriesfull_group2.joblib')
+    dump(forest, '../sensing_data/models/boosted_test_group1.joblib')
     print("Saved model to disk")
 
     # Testing trash
@@ -167,14 +171,14 @@ def main(argv):
     print("Creating uncertainty matrix...")
     start_matrix = time.time()
 
-    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 5))
+    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 3))
 
     viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_urbana.tiff",
                       y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_rural.tiff",
-                       y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
-                        y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
+    # viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_rural.tiff",
+    #                    y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+    # viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
+    #                     y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "natural.tiff",
                       y_pred_proba_reshaped[:, :, 3], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
