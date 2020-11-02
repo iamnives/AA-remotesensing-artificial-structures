@@ -69,7 +69,7 @@ def main(argv):
     if selector_flag:
         print("Using feature selection...")
 
-    obj = 'multi:softmax'
+    obj = 'binary:hinge'
 
     real_start = time.time()
     
@@ -79,7 +79,7 @@ def main(argv):
     train_size = int(19386625*0.2)
     # train_size = int(1607*1015*0.2)
     
-    X_train, y_train, X_test, y_test, _, _, _  = data.load(train_size, normalize=False, osm_roads=osm_roads, split_struct=split_struct)
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=osm_roads, split_struct=split_struct, gt_raster='cos_new_gt_2015t.tif')
 
     start = time.time()
 
@@ -92,7 +92,7 @@ def main(argv):
                             max_delta_step=9.075685204314162,
                             n_estimators=1500,
                             n_jobs=4,
-                            objective=obj,  # binary:hinge if binary classification
+                            #objective=obj,  # binary:hinge if binary classification
                             predictor='cpu_predictor',
                             tree_method='gpu_hist')
 
@@ -123,23 +123,31 @@ def main(argv):
     elapsed = end-start
     print("Training time: " + str(timedelta(seconds=elapsed)))
 
+
     yt_pred = forest.predict(X_train)
+
+    yt_pred[yt_pred > 0.5] = 1
+    yt_pred[yt_pred <= 0.5] = 0  
+
     kappa = cohen_kappa_score(y_train, yt_pred)
     print(f'Train Kappa: {kappa}')
     print(classification_report(y_train, yt_pred))
 
     y_pred = forest.predict(X_test)
+
+    y_pred[y_pred > 0.5] = 1
+    y_pred[y_pred <= 0.5] = 0 
+
     kappa = cohen_kappa_score(y_test, y_pred)
     print(f'Validation Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
-    return 0
 
     dump(forest, '../sensing_data/models/boosted_test_group1.joblib')
     print("Saved model to disk")
 
     # Testing trash
     X, y, shape = data.load_prediction(
-        ratio=1, normalize=False, osm_roads=osm_roads, split_struct=split_struct, army_gt=False)
+        ratio=1, map_classes=False, normalize=False, osm_roads=osm_roads, split_struct=split_struct, gt_raster='cos_new_gt_2015t.tif')
 
     start_pred = time.time()
     # batch test
@@ -149,14 +157,15 @@ def main(argv):
     forest.get_booster().set_param('predictor', 'cpu_predictor')
 
     print("Predict 0%...")
-    y_pred = forest.predict_proba(X_h)
+    y_pred = forest.predict(X_h)
     print("Predict 50%...")
-    y_pred2 = forest.predict_proba(X_h1)
+    y_pred2 = forest.predict(X_h1)
     print("Predict 100%...")
 
-    y_pred_proba = np.concatenate((y_pred, y_pred2))
-    y_pred_classes = np.array(
-        [np.argmax(yi, axis=-1) + 1 for yi in tqdm(y_pred_proba)])
+    y_pred_classes = np.concatenate((y_pred, y_pred2))
+    y_pred_classes[y_pred_classes > 0.5] = 1
+    y_pred_classes[y_pred_classes <= 0.5] = 0 
+
     print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
     kappa = cohen_kappa_score(y, y_pred_classes)
@@ -171,12 +180,14 @@ def main(argv):
     print("Creating uncertainty matrix...")
     start_matrix = time.time()
 
-    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 3))
+    return 
+
+    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 4))
 
     viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_urbana.tiff",
                       y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
-    # viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_rural.tiff",
-    #                    y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
+    viz.createGeotiff(OUT_PROBA_RASTER + "estrada.tiff",
+                    y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
     # viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
     #                     y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
     viz.createGeotiff(OUT_PROBA_RASTER + "natural.tiff",

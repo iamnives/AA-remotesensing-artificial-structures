@@ -14,8 +14,8 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
 
-SRC_FOLDER_S1 = SRC + "ts1/"
-SRC_FOLDER_S2 = SRC + "ts/"
+SRC_FOLDER_S1 = SRC + "t1stats/"
+SRC_FOLDER_S2 = SRC + "tstats/"
 
 
 def main(argv):
@@ -30,8 +30,8 @@ def main(argv):
 
     src_dss.sort()
 
-    refDs = gdal.Open("../sensing_data/clipped/" + ROI +
-                      "ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
+    ref_dss = src_dss[0]
+    refDs = gdal.Open(ref_dss, gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
     ref_shape = band.shape
 

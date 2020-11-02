@@ -11,11 +11,11 @@ import gdal
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "arbitrary/"
+ROI = "santarem-cd/"
 SRC = DATA_FOLDER + "clipped/" + ROI
 SRC_FOLDER = SRC + "ts1/"
 
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "t1stats/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "ts1stats/"
 
 def pairwise(iterable):
     "s -> (s0, s1), (s2, s3), (s4, s5), ..."
@@ -32,6 +32,7 @@ def main(argv):
     src_dss = [f for f in os.listdir(SRC_FOLDER) if (
         ".jp2" in f) or (".tif" in f) or (".img" in f)]
     src_dss.sort()
+    ref_dss = SRC_FOLDER + src_dss[0]  # Get the first one
 
     for vh, vv in pairwise(src_dss):
         raster_ds = gdal.Open(SRC_FOLDER + vv, gdal.GA_ReadOnly)
@@ -40,22 +41,22 @@ def main(argv):
         vh_data = raster_ds.GetRasterBand(1).ReadAsArray()
         vv_vh_data = np.divide(vv_data, vh_data)
         viz.createGeotiff(SRC_FOLDER + vv.split(".")[0] +"VH.tif", vv_vh_data,
-                          "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                          ref_dss, gdal.GDT_Float32)
 
     src_dss = [f for f in os.listdir(SRC_FOLDER) if (
     ".jp2" in f) or (".tif" in f) or (".img" in f)]
     src_dss.sort()
 
-    # 3clipped_subset_2_of_S1A_IW_GRDH_1SDV_20150706T182705_20150706T182730_006694_008F3B_B500GammaVH
+    # 3clipped_Gamma0_VH.img
     for f in src_dss:
         try:
-            key = f.split("_")[12].split(".")[0][-2:]
+            key = f.split("_")[2].split(".")[0]
             bands[key].append(SRC_FOLDER + f)
         except KeyError:
             print("ignoring")
 
     ref_ds = gdal.Open(
-        "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
+        ref_dss, gdal.GA_ReadOnly)
     band = ref_ds.GetRasterBand(1).ReadAsArray()
     ref_shape = band.shape
 
@@ -86,19 +87,19 @@ def main(argv):
             variance = np.sqrt(std)  # variance
 
             viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
             viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
             viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
             viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
             viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
             viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
             viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
-                            "../sensing_data/clipped/arbitrary/ignored/static/clipped_sentinel2_B08.vrt", gdal.GDT_Float32)
+                            ref_dss, gdal.GDT_Float32)
 
 if __name__ == "__main__":
     main(sys.argv)
