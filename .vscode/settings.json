@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\amnev\\Anaconda3\\envs\\thesis\\python.exe",
+    "python.pythonPath": "/home/nives/anaconda3/envs/ml/bin/python",
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true
 }
