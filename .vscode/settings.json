@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
+    "python.pythonPath": "/home/nives/anaconda3/envs/ml/bin/python",
+=======
     "python.pythonPath": "C:\\Users\\AMNeves\\anaconda3\\envs\\phd-ml\\python.exe",
+>>>>>>> 0eb63bf978ca59c3bab77b95e5564ed12f66ac1a
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true
 }
