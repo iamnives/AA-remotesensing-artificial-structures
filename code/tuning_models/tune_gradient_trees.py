@@ -36,7 +36,7 @@ def model(dfs):
     # n_estimators is how many round of boosting
     # finally, ensemble xgboost with multiple seeds may reduce variance
     n_trees = [500,1000,1500]
-    parameters = {'n_jobs': [6],
+    parameters = {
                   'tree_method': ['gpu_hist'],
                   'predictor': ['gpu_predictor'],
                   'gpu_id': [0],
@@ -51,7 +51,7 @@ def model(dfs):
                   'max_delta_step': uniform(1,9)}
 
     kappa_scorer = make_scorer(cohen_kappa_score)
-    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=50, verbose=1, n_jobs=1)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=50, verbose=1, n_jobs=10)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")
