@@ -91,7 +91,7 @@ def main(argv):
                             min_child_weight=1,
                             max_delta_step=9.075685204314162,
                             n_estimators=1500,
-                            n_jobs=4,
+                            n_jobs=-1,
                             #objective=obj,  # binary:hinge if binary classification
                             predictor='cpu_predictor',
                             tree_method='gpu_hist')
