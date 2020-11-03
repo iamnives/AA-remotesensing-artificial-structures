@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "arbitrary/"
+ROI = "vila-de-rei/"
 SRC_S1 = DATA_FOLDER + "datasets/" + ROI + "s1/"
 SRC_S2 = DATA_FOLDER + "datasets/s2/"
 SRC_DEM = DATA_FOLDER + "dem/"
@@ -27,8 +27,7 @@ def main(argv):
     for f in src_dss:
         outFile = f.split("/")[-1]
         #cut_command = f"gdalwarp -t_srs EPSG:32629 -r near -of GTiff -tr 10 10 -tap -cutline {MASK} -crop_to_cutline {f} {DST_FOLDER + 'clipped_' + outFile}"
-        gdal.Warp(DST_FOLDER + 'clipped_' + outFile, f, dstSRS="EPSG:32629", resampleAlg="near",
-                  format="GTiff", xRes=10, yRes=10, cutlineDSName=MASK, cropToCutline=True)
+        gdal.Warp(DST_FOLDER + 'clipped_' + outFile, f, dstSRS="EPSG:32629", resampleAlg="near", format="GTiff", xRes=10, yRes=10, cutlineDSName=MASK, cropToCutline=True)
         # os.system(cut_command)
 
 

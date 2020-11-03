@@ -127,7 +127,7 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=None, map_classes=True, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False):
+def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tif"):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -180,13 +180,16 @@ def load_prediction(ratio=1, normalize=None, map_classes=True, binary=False, osm
         print("Saving data to file cache...")
         np.save(CACHE_FOLDER + "pred_data.npy", X)
 
-    if normalize is not None:
+    if normalize:
         X = normalize.transform(X)
 
     labelDS = gdal.Open(
-        DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-    y = labelDS.GetRasterBand(1).ReadAsArray()[
-        :shape[0], :shape[1]].flatten()
+        DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
+
+    y = labelDS.GetRasterBand(1)
+    y = y.ReadAsArray()[:shape[0], :shape[1]].flatten()
+    y[y > 0.5] = 1
+    y[y <= 0.5] = 0
 
     maping_f = _class_map
     if binary:
@@ -232,7 +235,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False):
+def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tif"):
 
     try:
         print("Trying to load cached data...")
@@ -273,7 +276,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
             roads = roads_ds.GetRasterBand(1).ReadAsArray()
 
         # Prepare training data (set of pixels used for training) and labels
-        is_train = np.nonzero(cos_bands)
+        # is_train = np.nonzero(cos_bands)
 
         # Create empty HxW array/matrix
         # X = np.empty((len(src_dss), len(cos_bands[is_train])))
@@ -286,7 +289,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
                 raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
                 # Extract band's data and transform into a numpy array
                 test_ds = raster_ds.GetRasterBand(1).ReadAsArray()
-                X.append(test_ds[is_train])
+                X.append(test_ds.flatten())
 
         # dont remove transpose after loading, time sucks if you do it at load 
         # more resource heavy but it takes way less time
@@ -299,11 +302,20 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
 
         cos_ds = gdal.Open(
-            DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
-        cos_bands = cos_ds.GetRasterBand(1).ReadAsArray()[:, :]
+            DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
+            
+        cos_bands = cos_ds.GetRasterBand(1)
+        cos_bands = cos_bands.ReadAsArray()[:, :]
+        cos_bands[cos_bands > 0.5] = 1
+        cos_bands[cos_bands <= 0.5] = 0
         
-        is_train = np.nonzero(cos_bands)
-        y = cos_bands[is_train]
+        (unique, counts) = np.unique(cos_bands, return_counts=True)
+        frequencies = np.asarray((unique, counts)).T
+
+        print(frequencies)
+
+        # is_train = np.nonzero(cos_bands)
+        y = cos_bands.flatten()
 
         maping_f = _class_map
         if binary:
