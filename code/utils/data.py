@@ -267,7 +267,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
 
         # Extract band's data and transform into a numpy array
         cos_ds = gdal.Open(
-            DS_FOLDER + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+            DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
         cos_bands = cos_ds.GetRasterBand(1).ReadAsArray()[:, :]
 
         if osm_roads:
