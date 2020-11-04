@@ -79,7 +79,7 @@ def main(argv):
     train_size = int(19386625*0.2)
     # train_size = int(1607*1015*0.2)
     
-    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=osm_roads, split_struct=split_struct, gt_raster='cos_new_gt_2015t.tif')
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=osm_roads, split_struct=split_struct, gt_raster='cos_new_gt_2015t.tiff')
 
     start = time.time()
 
@@ -93,8 +93,9 @@ def main(argv):
                             n_estimators=1500,
                             n_jobs=-1,
                             #objective=obj,  # binary:hinge if binary classification
-                            predictor='cpu_predictor',
-                            tree_method='gpu_hist')
+                            #predictor='cpu_predictor',
+                            #tree_method='gpu_hist'
+                            )
 
 
     if selector_flag:

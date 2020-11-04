@@ -127,7 +127,7 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tif"):
+def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tiff"):
     print("Prediction data: Loading...")
     src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
         "cos" not in f) and ("xml" not in f) and ("_" in f)]
@@ -197,7 +197,7 @@ def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, o
 
     if osm_roads:
         labelDS = gdal.Open(
-            DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+            DS_FOLDER + "roads_cos_50982.tiff", gdal.GA_ReadOnly)
         roads = labelDS.GetRasterBand(1).ReadAsArray()[
             :shape[0], :shape[1]].flatten()
         y[roads == 4] = roads[roads == 4]
@@ -235,7 +235,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tif"):
+def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tiff"):
 
     try:
         print("Trying to load cached data...")
@@ -275,7 +275,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
         # Get list of raster bands info as array, already indexed by labels non zero
         print("Datasets: Loading...")
         for i, raster in enumerate(tqdm(src_dss)):
-            if(("cos_50982.tif" not in raster) and ("xml" not in raster)):
+            if(("cos_50982.tiff" not in raster) and ("xml" not in raster)):
                 # Open raster dataset
                 raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
                 # Extract band's data and transform into a numpy array
@@ -315,7 +315,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
 
         if osm_roads:
             roads_ds = gdal.Open(
-                DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
+                DS_FOLDER + "roads_cos_50982.tiff", gdal.GA_ReadOnly)
             roads = roads_ds.GetRasterBand(1).ReadAsArray()    
             roads = roads[is_train]
             y[roads == 4] = roads[roads == 4]
