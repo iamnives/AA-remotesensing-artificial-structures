@@ -177,10 +177,10 @@ def main(argv):
     viz.createGeotiff(OUT_RASTER, y_pred_classes_reshaped,
                       REF_FILE, gdal.GDT_Byte)
 
+    return 
+    
     print("Creating uncertainty matrix...")
     start_matrix = time.time()
-
-    return 
 
     y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 4))
 
