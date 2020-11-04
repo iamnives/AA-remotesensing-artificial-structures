@@ -264,16 +264,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
         else:
             src_dss = datafiles
         src_dss.sort()
-
-        # Extract band's data and transform into a numpy array
-        cos_ds = gdal.Open(
-            DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
-        cos_bands = cos_ds.GetRasterBand(1).ReadAsArray()[:, :]
-
-        if osm_roads:
-            roads_ds = gdal.Open(
-                DS_FOLDER + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-            roads = roads_ds.GetRasterBand(1).ReadAsArray()
+        print("SRC Images: ", src_dss)
 
         # Prepare training data (set of pixels used for training) and labels
         # is_train = np.nonzero(cos_bands)
