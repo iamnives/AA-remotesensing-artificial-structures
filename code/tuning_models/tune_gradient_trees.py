@@ -23,7 +23,7 @@ from sklearn.model_selection import GridSearchCV
 def model(dfs):
     
     train_size = int(19386625*0.05)
-    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=False, split_struct=False, gt_raster='cos_new_gt_2015t.tif')
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=False, split_struct=False, gt_raster='cos_new_gt_2015t.tiff')
         
     start = time.time()
     print(f'Tuning on {X_train.shape}')
@@ -37,9 +37,9 @@ def model(dfs):
     # finally, ensemble xgboost with multiple seeds may reduce variance
     n_trees = [500,1000,1500]
     parameters = {
-                  'tree_method': ['gpu_hist'],
-                  'predictor': ['gpu_predictor'],
-                  'gpu_id': [0],
+                  'tree_method': ['hist'],
+                  'predictor': ['cpu_predictor'],
+                  #'gpu_id': [0],
                   #'objective': ['multi:softmax'],
                   # params tuning
                   'learning_rate': uniform(0.001,0.3),  # `eta` value
