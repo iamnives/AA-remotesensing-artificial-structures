@@ -51,7 +51,7 @@ def model(dfs):
                   'max_delta_step': uniform(1,9)}
 
     kappa_scorer = make_scorer(cohen_kappa_score)
-    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=200, verbose=1, n_jobs=30)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=200, verbose=1, n_jobs=15)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")
