@@ -1,0 +1,23 @@
+Trying to load cached data...
+Using cached data...
+Tuning on (969331, 143)
+Fitting 3 folds for each of 200 candidates, totalling 600 fits
+Best parameters set found on development set: 
+
+{'colsample_bytree': 0.7343021353976351, 'gamma': 0, 'learning_rate': 0.16313076998849083, 'max_delta_step': 8.62355770678575, 'max_depth': 8, 'min_child_weight': 3, 'n_estimators': 1500, 'predictor': 'cpu_predictor', 'tree_method': 'hist'}
+
+0.721787394092514
+
+Kappa: 0.7356177437574289
+              precision    recall  f1-score   support
+
+           0       0.99      0.99      0.99    185381
+           1       0.83      0.68      0.75      8485
+
+    accuracy                           0.98    193866
+   macro avg       0.91      0.84      0.87    193866
+weighted avg       0.98      0.98      0.98    193866
+
+[[184178   1203]
+ [  2721   5764]]
+Run time: 7:30:12.657505
