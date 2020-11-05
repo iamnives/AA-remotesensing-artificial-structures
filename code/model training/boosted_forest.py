@@ -83,18 +83,21 @@ def main(argv):
 
     start = time.time()
 
-    forest = xgb.XGBClassifier(colsample_bytree=0.7553707061597048,
-                            gamma=5,
+    #XGB_binary_building = {'colsample_bytree': 0.7343021353976351, 'gamma': 0, 'learning_rate': 0.16313076998849083, 'max_delta_step': 8.62355770678575, 'max_depth': 8, 'min_child_weight': 3, 'n_estimators': 1500, 'predictor': 'cpu_predictor', 'tree_method': 'hist'}
+
+
+    forest = xgb.XGBClassifier(colsample_bytree=0.7343021353976351,
+                            gamma=0,
                             gpu_id=0,
-                            learning_rate=0.2049732654267658,
+                            learning_rate=0.16313076998849083,
                             max_depth=8,
-                            min_child_weight=1,
-                            max_delta_step=9.075685204314162,
+                            min_child_weight=3,
+                            max_delta_step=8.62355770678575,
                             n_estimators=1500,
                             n_jobs=-1,
                             #objective=obj,  # binary:hinge if binary classification
-                            #predictor='cpu_predictor',
-                            #tree_method='gpu_hist'
+                            predictor='cpu_predictor',
+                            tree_method='hist'
                             )
 
 
