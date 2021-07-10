@@ -25,6 +25,8 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import classification_report
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
+from kerastuner import HyperModel
+from kerastuner.tuners import RandomSearch
 
 
 
@@ -48,38 +50,30 @@ def gen_graph(history, title):
     plt.show()
 
 
-# Tensorflow trash
-def model(dfs):
-    start = time.time()
-    train_size = 100_000
-    X_train, y_train, X_test, y_test = data.load(
-        train_size, normalize=True, balance=False)
 
-    input_shape = X_train.shape[1]
-    logits = 4
+class MyHyperModel(HyperModel):
 
-    y_train_onehot = tf.keras.utils.to_categorical(y_train, num_classes=logits)
+    def __init__(self, classes):
+        self.classes = classes
 
-    dnn = Sequential()
-    # Define DNN structure
-    dnn.add(Dense(32, input_dim=input_shape, activation='relu'))
-    dnn.add(Dense(units=logits, activation='softmax'))
+    def build(self, hp):
+        model = tf.keras.Sequential()
+        for i in range(hp.Int('num_layers', 2, 20)):
+            model.add(tf.keras.layers.Dense(units=hp.Int('units_' + str(i),
+                                                min_value=32,
+                                                max_value=512,
+                                                step=32),
+                                activation='relu'))
+        model.add( tf.keras.layers.Dense(self.classes, activation='softmax'))
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(
+                hp.Choice('learning_rate', [1e-2, 1e-3, 1e-4])),
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy'])
+        return model
 
-    dnn.compile(
-        loss='categorical_crossentropy',
-        optimizer='Adadelta',
-        metrics=['accuracy']
-    )
-    dnn.summary()
-
-    history_rmsprop = dnn.fit(X_train, y_train_onehot,
-                              epochs=10, validation_split=0.1)
-
-    # plot the accuracy
-    gen_graph(history_rmsprop,
-              "ResNet50 RMSprop")
-
-    y_pred_onehot = dnn.predict(X_test)
+def predict_metrics(model, X_test, y_test):
+    y_pred_onehot = model.predict(X_test)
 
     y_pred = [np.argmax(pred) for pred in y_pred_onehot]
 
@@ -87,12 +81,36 @@ def model(dfs):
     matrix = confusion_matrix(y_test, y_pred)
     print(f'Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
-
-    end = time.time()
-    elapsed = end-start
-    print("Run time: " + str(timedelta(seconds=elapsed)))
-
     viz.plot_confusionmx(matrix)
+
+# Tensorflow trash
+def model(dfs):
+    X_train, y_train, X_test, y_test, val_x, val_y, norm = data.load(normalize=True, znorm=False, datafiles=dfs, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=True, split_struct=False, gt_raster="ua_ground.tif") 
+
+    logits = 2
+
+    hypermodel = MyHyperModel(classes=logits)
+
+    tuner = RandomSearch(
+        hypermodel,
+        objective='val_accuracy',
+        max_trials=10,
+        directory='./dnn_tunes',
+        project_name='au2018_tune')
+
+    tuner.search(X_train, y_train,
+                epochs=5,
+                validation_data=(val_x, val_y))
+
+    tuner.search_space_summary()
+
+    tuner.search(X_train, y_train,
+             epochs=5,
+             validation_data=(val_x, val_y))
+
+    models = tuner.get_best_models(num_models=2)
+
+    tuner.results_summary()
 
 
 def main(argv):

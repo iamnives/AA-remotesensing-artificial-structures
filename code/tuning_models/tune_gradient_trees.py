@@ -21,10 +21,8 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 
 def model(dfs):
-    
-    train_size = int(19386625*0.05)
-    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=False, split_struct=False, gt_raster='cos_new_gt_2015t.tiff')
-        
+    gt_raster = "cos_indi_ground_binary.tiff"
+    X_train, y_train, X_test, y_test, _, _, _ = data.load(normalize=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, gt_raster=gt_raster) 
     start = time.time()
     print(f'Tuning on {X_train.shape}')
     xgb_model = xgb.XGBClassifier()
@@ -37,10 +35,10 @@ def model(dfs):
     # finally, ensemble xgboost with multiple seeds may reduce variance
     n_trees = [500,1000,1500]
     parameters = {
-                  'tree_method': ['hist'],
-                  'predictor': ['cpu_predictor'],
-                  #'gpu_id': [0],
-                  #'objective': ['multi:softmax'],
+                  'tree_method': ['gpu_hist'],
+                  'predictor': ['gpu_predictor'],
+                  'gpu_id': [0],
+                  'objective': ['binary:hinge'],
                   # params tuning
                   'learning_rate': uniform(0.001,0.3),  # `eta` value
                   'max_depth': [3, 5, 6, 8],
@@ -48,10 +46,13 @@ def model(dfs):
                   "gamma": [0, 1, 5],
                   'colsample_bytree': uniform(0.7,0.2),
                   'n_estimators': n_trees,
-                  'max_delta_step': uniform(1,9)}
+                  'max_delta_step': uniform(1,9), 
+                  'n_jobs': [-1],
+                  'verbosity':[0]
+                  }
 
     kappa_scorer = make_scorer(cohen_kappa_score)
-    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=200, verbose=1, n_jobs=10)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=20, verbose=10, n_jobs=1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")

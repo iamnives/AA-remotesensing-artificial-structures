@@ -14,9 +14,9 @@ DATA_FOLDER = "../sensing_data/"
 ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
 
-SRC_FOLDER_S1 = SRC + "t1stats/"
-SRC_FOLDER_S2 = SRC + "tstats/"
-
+SRC_FOLDER_S1 = SRC + "t1stats_decis/"
+SRC_FOLDER_S2 = SRC + "tstats_decis/"
+SRC_FOLDER_STATIC = SRC
 
 def main(argv):
     print("Validating dataset...")
@@ -26,7 +26,10 @@ def main(argv):
     src_dss_ts2 = [SRC_FOLDER_S2 + f for f in os.listdir(SRC_FOLDER_S2) if (
         ".jp2" in f) or (".tif" in f) or (".img" in f)]
 
-    src_dss = src_dss_ts1 + src_dss_ts2
+    src_dss_static = [SRC_FOLDER_STATIC + f for f in os.listdir(SRC_FOLDER_STATIC) if (
+        ".jp2" in f) or (".tif" in f) or (".img" in f)]
+
+    src_dss = src_dss_ts1 + src_dss_ts2 + src_dss_static
 
     src_dss.sort()
 

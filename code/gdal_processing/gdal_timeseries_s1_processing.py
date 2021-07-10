@@ -11,11 +11,11 @@ import gdal
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "santarem-cd/"
+ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
 SRC_FOLDER = SRC + "ts1/"
 
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "ts1stats/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "t1stats_decis/"
 
 def pairwise(iterable):
     "s -> (s0, s1), (s2, s3), (s4, s5), ..."
@@ -53,11 +53,11 @@ def main(argv):
             key = f.split("_")[2].split(".")[0]
             bands[key].append(SRC_FOLDER + f)
         except KeyError:
-            print("ignoring")
-
-    ref_ds = gdal.Open(
-        ref_dss, gdal.GA_ReadOnly)
-    band = ref_ds.GetRasterBand(1).ReadAsArray()
+            print("ignoring", f)
+    
+    refDs = gdal.Open("../sensing_data/clipped/" + ROI +
+                      "ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
+    band = refDs.GetRasterBand(1).ReadAsArray()
     ref_shape = band.shape
 
     for b in tqdm(bands):
@@ -76,30 +76,35 @@ def main(argv):
             timeseries = np.array(timeseries)
             timeseries[~np.isfinite(timeseries)] = 0
 
-            # Using quartiles, change to 0.05 quantiles later if load isn't too much...
-            mean_ts = np.mean(timeseries, axis=0)  # mean
-            q0 = np.quantile(timeseries, 0.00, axis=0)  # minimum
-            q1 = np.quantile(timeseries, 0.25, axis=0)  # first quantile
-            q2 = np.quantile(timeseries, 0.50, axis=0)  # median
-            q3 = np.quantile(timeseries, 0.75, axis=0)  # third quantile
-            q4 = np.quantile(timeseries, 1.0, axis=0)  # maximum
-            std = np.std(timeseries, axis=0)  # standard dev
-            variance = np.sqrt(std)  # variance
+# Using quartiles, change to 0.05 quantiles later if load isn't too much...
+        mean_ts = np.mean(timeseries, axis=0)  # mean
+        nq_tiles = 10
 
-            viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
-                            ref_dss, gdal.GDT_Float32)
-            viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
-                            ref_dss, gdal.GDT_Float32)
-            viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,
-                            ref_dss, gdal.GDT_Float32)
-            viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,
-                            ref_dss, gdal.GDT_Float32)
-            viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,
-                            ref_dss, gdal.GDT_Float32)
-            viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4,
-                            ref_dss, gdal.GDT_Float32)
-            viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
-                            ref_dss, gdal.GDT_Float32)
+        q0 = np.quantile(timeseries, 0.00, axis=0)  # minimum
 
+        n_tiles = [q0]
+
+        increment = 1/nq_tiles
+        q_tile = 0.00
+        for n in range(nq_tiles-1):
+            q_tile += increment
+            q = np.quantile(timeseries, q_tile, axis=0)
+            n_tiles.append(q)
+
+        std = np.std(timeseries, axis=0)  # standard dev
+        variance = np.sqrt(std)  # variance
+
+        d_type = gdal.GDT_Float32
+
+        viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
+                          ref_dss, d_type)
+        viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
+                          ref_dss, d_type)
+        viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
+                          ref_dss, d_type)
+
+        for idx, q in enumerate(n_tiles):
+            viz.createGeotiff(DST_FOLDER + b + f"_q{idx}.tiff", q,
+                          ref_dss, d_type)
 if __name__ == "__main__":
     main(sys.argv)

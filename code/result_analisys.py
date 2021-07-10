@@ -8,19 +8,20 @@ import gdal
 from utils import visualization as viz
 from utils import data
 import numpy as np
+from numpy import interp
+from itertools import cycle
 from tqdm import tqdm
-from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
+from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score, roc_auc_score,  roc_curve, auc
 import matplotlib
 import matplotlib.pyplot as plt
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "bigsquare/"
 
 SRC_FOLDER = DATA_FOLDER + "results/" + ROI
-SRC = SRC_FOLDER + "timeseries/"
+SRC = SRC_FOLDER
 
-GT_SRC = SRC_FOLDER + "GT/"
 COS_SRC = DATA_FOLDER + "clipped/" + ROI
 
 
@@ -73,7 +74,6 @@ def plot_confusion_matrix(y_true, y_pred, classes,
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
     fig.tight_layout()
-    plt.savefig(title+'.pdf')
     return ax
 
 def scl_map(x_elem):
@@ -138,6 +138,70 @@ def ghsl_map(x_elem):
         return 2
     return 1  # else its structure
 
+def calc_roc(y_test, y_score, n_classes=5):
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    tholds = dict() 
+    roc_auc = dict()
+    for i in range(n_classes):
+        fpr[i], tpr[i], tholds[i] = roc_curve((y_test==i), y_score[i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+    # Compute micro-average ROC curve and ROC area
+
+    #fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
+    #roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])    
+    return fpr, tpr, roc_auc, tholds
+
+def plot_roc(fpr, tpr, roc_auc, n_classes=5, optimal_points=None, tholds=None):
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+    # Plot all ROC curves
+    lw = 2
+    plt.figure()
+    #plt.plot(fpr["micro"], tpr["micro"],
+    #        label='micro-average ROC curve (area = {0:0.2f})'
+    #            ''.format(roc_auc["micro"]),
+    #        color='deeppink', linestyle=':', linewidth=4)
+
+    plt.plot(fpr["macro"], tpr["macro"],
+            label='macro-average ROC curve (area = {0:0.2f})'
+                ''.format(roc_auc["macro"]),
+            color='navy', linestyle=':', linewidth=4)
+
+    colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
+                label='ROC curve of class {0} (area = {1:0.2f})'
+                ''.format(i, roc_auc[i]))
+
+        if optimal_points is not None:
+            plt.plot(fpr[i][optimal_points[i]], tpr[i][optimal_points[i]], color='red', marker="*")
+            print('class: ', i ,tholds[i][optimal_points[i]])
+            plt.text(fpr[i][optimal_points[i]], tpr[i][optimal_points[i]], tholds[i][optimal_points[i]], fontsize=9)
+
+    plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Some extension of Receiver operating characteristic to multi-class')
+    plt.legend(loc="lower right")
+    plt.show()
+
 def main(argv):
     """Runs main code for result analysis
 
@@ -146,74 +210,73 @@ def main(argv):
     Returns:
         None
    """
-    result_10m = gdal.Open(
-        SRC + "boosted_20px_ts_s1_s2_idxfixed_roads_truealign_classification.tiff", gdal.GA_ReadOnly)
+    result_10m = gdal.Open(SRC + "recall almost 1, precision 0.2.tif", gdal.GA_ReadOnly)
     result_10m = result_10m.GetRasterBand(1).ReadAsArray()
 
-    gt = gdal.Open(GT_SRC + "T29SND_20190525T112121_SCL.tif", gdal.GA_ReadOnly)
-    gt = gt.GetRasterBand(1).ReadAsArray()
-    gt = gt[:result_10m.shape[0], :result_10m.shape[1]]
+    train_zone = gdal.Open(SRC + "small_square.tif", gdal.GA_ReadOnly)
+    train_zone = train_zone.GetRasterBand(1).ReadAsArray()
 
-    cos = gdal.Open(COS_SRC + "clipped_cos_50982.tif", gdal.GA_ReadOnly)
+    cos = gdal.Open(COS_SRC + "cos_indi_ground_binary_big.tif", gdal.GA_ReadOnly)
     cos = cos.GetRasterBand(1).ReadAsArray()
-    cos = cos[:result_10m.shape[0], :result_10m.shape[1]]
 
-    # roads = gdal.Open(COS_SRC + "roads_cos_50982.tif", gdal.GA_ReadOnly)
-    # roads = roads.GetRasterBand(1).ReadAsArray()
-    # roads = roads[:result_10m.shape[0], :result_10m.shape[1]]
-    # cos[roads == 4] = roads[roads == 4]
+    train_zone = train_zone.ravel()
+    result_10m = result_10m.ravel()
+    cos = cos.ravel()
 
-    ghsl_10m = gdal.Open(SRC + "gshl.tif", gdal.GA_ReadOnly)
-    ghsl_10m = ghsl_10m.GetRasterBand(1).ReadAsArray()
-    ghsl_10m = ghsl_10m[:result_10m.shape[0], :result_10m.shape[1]]
+    #valid_idx = np.where((train_zone==0) & (result_10m !=0))
+    valid_idx = np.where((result_10m !=0))
 
-    print("Mapping GHSL...")
-    ghsl_10m_mapped = np.array([ghsl_map(yi)
-                    for yi in tqdm(ghsl_10m.flatten())]).reshape((1937, 2501))
+    cos = cos-1
+    cos = cos[valid_idx]
+    cos_og = np.copy(cos)
 
-    print("Mapping cos...")
-    cos = np.array([data._class_map(yi)
-                    for yi in tqdm(cos.flatten())]).reshape((1937, 2501))
+    result_10m = result_10m-1
+    result_10m = result_10m[valid_idx]
 
+    #cos[np.where((cos==0) | (cos==1) | (cos==2) | (cos==4))] = 1
+    #cos[cos==3] = 0
+    #result_10m[np.where((result_10m==0) | (result_10m==1) | (result_10m==2) | (result_10m==4))] = 1
+    #result_10m[result_10m==3] = 0
 
-    print("Shapes: ")
-    print(result_10m.shape, gt.shape, cos.shape)
-
-    print("Mapping scl...")
-    gt = np.array([scl_map(yi)
-                   for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
-
-
-
-    classes = ["NON_VEGETATED", "VEGETATION", "WATER", "SCL Anomaly"]
-    classes_cos = ["NON_VEGETATED",  "VEGETATION", "WATER"]
-    classes_scl = ["NON_VEGETATED",  "VEGETATION", "WATER", "SCL Anomaly"]
-
-
-    plot_confusion_matrix(cos.flatten(), gt.flatten(), classes=classes_scl,
-                          normalize=True, title="SentinelSCL-COS 10m Normalized confusion matrix")
-
-    plot_confusion_matrix(cos.flatten(), result_10m.flatten(
-    ), classes=classes_cos, normalize=True, title="XGBoost-COS 10m Normalized confusion matrix")
-
-
-    print("Mapping results...")
-    result_10_mapped = np.array(
-        [reverse_scl_map(yi) for yi in tqdm(result_10m.flatten())]).reshape((1937, 2501))
-
-    print("Re-mapping scl...")
-    gt_mapped = np.array(
-        [scl_gt_map(yi) for yi in tqdm(gt.flatten())]).reshape((1937, 2501))
-
-    plot_confusion_matrix(gt_mapped.flatten(), result_10_mapped.flatten(
-    ), classes=classes, normalize=True, title="XGBoost-SentinelSCL 10m Normalized confusion matrix")
-
-    plot_confusion_matrix(cos.flatten(), ghsl_10m_mapped.flatten(
-    ), classes=classes_cos, normalize=True, title="GHSL-Cos 10m Normalized confusion matrix")
-
-    kappa = cohen_kappa_score(cos.flatten(), ghsl_10m_mapped.flatten())
+    kappa = cohen_kappa_score(cos, result_10m)
     print(f'Kappa: {kappa}')
-    print(classification_report(cos.flatten(), ghsl_10m_mapped.flatten()))
+    print(classification_report(cos, result_10m))
+    
+    #classes_cos = ["HIGH DENSITY",  "RURAL", "NON RESIDENTIAL", "NON BUILT UP", "INDIVIDUAL"]
+    classes_cos = [0, 1, 2, 3, 4]
+    plot_confusion_matrix(result_10m, cos, classes=classes_cos,
+                          normalize=True, title="SentinelSCL-COS Individual 10m Normalized confusion matrix")
+
+    # Caluate rocs and probas
+    class_1 = gdal.Open(SRC + "boosted_newfmz_test_classificationestrutura.tiff", gdal.GA_ReadOnly)
+    class_1 = class_1.GetRasterBand(1).ReadAsArray().ravel()[valid_idx]
+
+    #class_2 = gdal.Open(SRC + "boosted_newfmz_test_classificationrural.tiff", gdal.GA_ReadOnly)
+    #class_2 = class_2.GetRasterBand(1).ReadAsArray().ravel()[valid_idx]
+
+    #class_3 = gdal.Open(SRC + "boosted_newfmz_test_classificationoutras.tiff", gdal.GA_ReadOnly)
+    #class_3 = class_3.GetRasterBand(1).ReadAsArray().ravel()[valid_idx]
+
+    #class_4 = gdal.Open(SRC + "boosted_newfmz_test_classificationnatural.tiff", gdal.GA_ReadOnly)
+    #class_4 = class_4.GetRasterBand(1).ReadAsArray().ravel()[valid_idx]
+
+    #class_5 = gdal.Open(SRC + "boosted_newfmz_test_classificationindi.tiff", gdal.GA_ReadOnly)
+    #class_5 = class_5.GetRasterBand(1).ReadAsArray().ravel()[valid_idx]
+
+    #y_score = np.array([class_1, class_2, class_3, class_4, class_5])
+    fpr, tpr, roc_auc, tholds = calc_roc(cos_og, [class_1], n_classes=1)
+
+    roc_optimal = np.array([0,1])
+    optimal_points = np.empty(5, dtype=int)
+
+    for idx in range(0,1):
+        points = np.stack((fpr[idx], tpr[idx]), axis=-1)
+        
+        distances = np.array([np.linalg.norm(a-roc_optimal) for a in points])
+
+        optimal_points[idx] = np.argmin(distances)
+
+    plot_roc(fpr, tpr, roc_auc, n_classes=1, optimal_points=optimal_points, tholds=tholds)
 
 if __name__ == "__main__":
     main(sys.argv)

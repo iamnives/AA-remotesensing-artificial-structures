@@ -11,19 +11,19 @@ import gdal
 import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-
+import matplotlib.pyplot as plt
 from imblearn.under_sampling import RandomUnderSampler, TomekLinks
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.combine import SMOTETomek
 from imblearn.ensemble import RUSBoostClassifier
-
+from scipy import stats
 import scipy.signal
 
 from tqdm import tqdm
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "bigsquare/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 TS_FOLDER = DS_FOLDER + "tstats/"
@@ -77,6 +77,33 @@ def _class_map(x):
         return 3
     return 2
 
+def _class_map_ua(x):
+    if x >= 1 and x <= 7: 
+        #built up
+        return 0
+    return 1
+
+def _class_split_map_ua(x):
+    if x >= 1 and x <= 3: 
+        #dense fabric
+        return 1
+    if x > 3 and x <= 6: 
+        #less dense fabric
+        return 2
+    elif (x > 6 and x <= 14) or (x == 17):
+        # roads and other structures 17 sport
+        return 3
+    elif x > 25 and x <= 27:
+        # water bodies
+        return 5
+    return 4 # non built up
+
+def _class_split_map_ua_binary(x):
+    if x >= 1 and x <= 3: 
+        #urban fabric
+        return 1
+    return 0 # non built up
+
 def _class_split_map(x):
     if x == 1: 
         return 1
@@ -109,11 +136,9 @@ def _road_map(x):  # roads vs all
     return 2
 
 def _class_map_binary(x):
-    if x >= 1 and x <= 13:
+    if (x >= 1 and x <= 3) or x == 5:
         return 1
-    else:
-        return 2
-    return 2
+    return 0
 
 def get_features():
     src_dss = [f for f in os.listdir(DS_FOLDER) if (
@@ -127,20 +152,24 @@ def get_features():
     src_dss.sort()
     return np.array(src_dss)
 
-def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, osm_roads=False, convolve=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tiff"):
+def load_prediction(datafiles=None, ratio=1, znorm=False, normalize=False, map_classes=False, urban_atlas=False, binary=False, osm_roads=False, army_gt=False, split_struct=False, gt_raster="cos_ground.tiff"):
     print("Prediction data: Loading...")
-    src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
-        "cos" not in f) and ("xml" not in f) and ("_" in f)]
-    ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if (
-        "cos" not in f) and ("xml" not in f) and ("_" in f)]
-    ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if (
-        "cos" not in f) and ("xml" not in f) and ("_" in f)]
 
-    src_dss = src_dss + ts_dss + ts1_dss
+    if(datafiles is None):
+        src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
+            'ground' not in f) and ("xml" not in f) and ("_" in f) and ("decis" not in f)]
+        ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if (
+            'ground' not in f) and ("xml" not in f) and ("_" in f)]
+        ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if (
+            'ground' not in f) and ("xml" not in f) and ("_" in f)]
+
+        src_dss = src_dss + ts_dss + ts1_dss
+    else:
+        src_dss = datafiles
     src_dss.sort()
+    print("SRC Images: ", src_dss)
 
-    refDs = gdal.Open(
-        DS_FOLDER + "/ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
+    refDs = gdal.Open(gt_raster, gdal.GA_ReadOnly)
     band = refDs.GetRasterBand(1).ReadAsArray()
     shape = tuple([int(ratio*i) for i in band.shape])
 
@@ -152,23 +181,17 @@ def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, o
         print("Failed to load cached data...")
         print("Reconstructing data...")
         X = []
-
+        
+        print("Datasets: Loading...")
         for raster in tqdm(src_dss):
             # Open raster dataset
             raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
+            n_bands = raster_ds.RasterCount
             # Extract band's data and transform into a numpy array
-            test_ds = raster_ds.GetRasterBand(1).ReadAsArray()
-            test_ds = test_ds[:shape[0], :shape[1]]
-
-            if convolve:
-                # Blur kernel
-                filter_kernel = [[1, 1, 1],
-                                 [1, -8, 1],
-                                 [1, 1, 1]]
-                test_ds = scipy.signal.convolve2d(
-                    test_ds, filter_kernel, mode='same', boundary='fill', fillvalue=0)
-
-            X.append(test_ds.flatten())
+            for band in range(1, n_bands+1):
+                test_ds = raster_ds.GetRasterBand(band).ReadAsArray()
+                test_ds = test_ds[:shape[0], :shape[1]]
+                X.append(test_ds.flatten())
 
         print("Transposing data...")
         # Transpose attributes matrix
@@ -182,14 +205,15 @@ def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, o
 
     if normalize:
         X = normalize.transform(X)
+    elif znorm:
+        print("Z-Normalization: Loading...")
+        X = stats.zscore(X, axis=1)
+        print("Done!")
 
-    labelDS = gdal.Open(
-        DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
+    labelDS = gdal.Open(gt_raster, gdal.GA_ReadOnly)
 
     y = labelDS.GetRasterBand(1)
     y = y.ReadAsArray()[:shape[0], :shape[1]].flatten()
-    y[y > 0.5] = 1
-    y[y <= 0.5] = 0
 
     maping_f = _class_map
     if binary:
@@ -208,7 +232,11 @@ def load_prediction(ratio=1, normalize=False, map_classes=False, binary=False, o
 
     if army_gt:
         maping_f = _army_map
-        
+
+    if urban_atlas:
+        maping_f = _class_split_map_ua
+        print("Class Mapping: UA2018...")
+
     if map_classes:
         y = np.array([maping_f(yi) for yi in tqdm(y)])
 
@@ -235,7 +263,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=False, test_size=0.2, osm_roads=False, army_gt=False, split_struct=False, gt_raster="clipped_cos_50982.tiff"):
+def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, gt_raster="cos_ground.tif"):
 
     try:
         print("Trying to load cached data...")
@@ -247,24 +275,44 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
 
         X_val = np.load(CACHE_FOLDER + "val_data.npy")
         y_val = np.load(CACHE_FOLDER + "val_labels.npy")
-        print("Using cached data...")
+        print("Using cached data...", X_train.shape)
+        normalizer = None
     except Exception:
         print("Failed to load cached data...")
         print("Reconstructing data...")
        
         if(datafiles is None):
             src_dss = [DS_FOLDER + f for f in os.listdir(DS_FOLDER) if (
-                "cos" not in f) and ("xml" not in f) and ("_" in f)]
+                'ground' not in f) and ("xml" not in f) and ("_" in f) and ("decis" not in f)]
             ts_dss = [TS_FOLDER + f for f in os.listdir(TS_FOLDER) if (
-                "cos" not in f) and ("xml" not in f) and ("_" in f)]
+                'ground' not in f) and ("xml" not in f) and ("_" in f)]
             ts1_dss = [TS1_FOLDER + f for f in os.listdir(TS1_FOLDER) if (
-                "cos" not in f) and ("xml" not in f) and ("_" in f)]
+                'ground' not in f) and ("xml" not in f) and ("_" in f)]
 
             src_dss = src_dss + ts_dss + ts1_dss
         else:
             src_dss = datafiles
         src_dss.sort()
         print("SRC Images: ", src_dss)
+        
+        gt_ds = gdal.Open(
+            DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
+        gt_bands = gt_ds.GetRasterBand(1)
+        gt_bands = gt_bands.ReadAsArray()[:, :]
+
+        ref_ds = gdal.Open(
+            DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
+        
+        ref_bands = ref_ds.GetRasterBand(1)
+        ref_bands = ref_bands.ReadAsArray()[:, :]
+
+        (unique, counts) = np.unique(gt_bands, return_counts=True)
+        frequencies = np.asarray((unique, counts)).T
+
+        print(frequencies)
+
+        is_train = np.nonzero(ref_bands)
+        y = gt_bands[is_train].flatten()
 
         # Prepare training data (set of pixels used for training) and labels
         # is_train = np.nonzero(cos_bands)
@@ -275,40 +323,42 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
         # Get list of raster bands info as array, already indexed by labels non zero
         print("Datasets: Loading...")
         for i, raster in enumerate(tqdm(src_dss)):
-            if(("cos_50982.tiff" not in raster) and ("xml" not in raster)):
-                # Open raster dataset
-                raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
-                # Extract band's data and transform into a numpy array
-                test_ds = raster_ds.GetRasterBand(1).ReadAsArray()
-                X.append(test_ds.flatten())
+            # Open raster dataset
+            raster_ds = gdal.Open(raster, gdal.GA_ReadOnly)
+            n_bands = raster_ds.RasterCount
+            # Extract band's data and transform into a numpy array
+            for band in range(1, n_bands+1):
+                test_ds = raster_ds.GetRasterBand(band).ReadAsArray()
+                X.append(test_ds[is_train].flatten())
 
         # dont remove transpose after loading, time sucks if you do it at load 
         # more resource heavy but it takes way less time
         print("Transposing data...")
-        # Transpose attributes matrix
+        # Transpose attributes matrix 
         # X = X.T
         X = np.dstack(tuple(X))[0]
+
+        normalizer = None
+        if normalize:
+            print("Normalization: Loading...")
+            normalizer = preprocessing.Normalizer().fit(X)
+            X = normalizer.transform(X)
+            print("Done!")
+        elif znorm:
+            print("Z-Normalization: Loading...")
+            X = stats.zscore(X, axis=1)
+            print("Done!")
+
 
         print("Datasets: Done!           ")
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
 
-        cos_ds = gdal.Open(
-            DS_FOLDER + gt_raster, gdal.GA_ReadOnly)
-            
-        cos_bands = cos_ds.GetRasterBand(1)
-        cos_bands = cos_bands.ReadAsArray()[:, :]
-        cos_bands[cos_bands > 0.5] = 1
-        cos_bands[cos_bands <= 0.5] = 0
-        
-        (unique, counts) = np.unique(cos_bands, return_counts=True)
-        frequencies = np.asarray((unique, counts)).T
-
-        print(frequencies)
-
-        # is_train = np.nonzero(cos_bands)
-        y = cos_bands.flatten()
-
         maping_f = _class_map
+
+        if urban_atlas:
+            maping_f = _class_split_map_ua
+            print("Class Mapping: UA2018...")
+
         if binary:
             maping_f = _class_map_binary
             print("Class Mapping: Binary...")
@@ -317,7 +367,7 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
             roads_ds = gdal.Open(
                 DS_FOLDER + "roads_cos_50982.tiff", gdal.GA_ReadOnly)
             roads = roads_ds.GetRasterBand(1).ReadAsArray()    
-            roads = roads[is_train]
+            #roads = roads[is_train]
             y[roads == 4] = roads[roads == 4]
             maping_f = _road_and_map
             print("Class Mapping: Roads...")
@@ -335,14 +385,16 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
             y = np.array([maping_f(yi) for yi in tqdm(y)])
             print("Class Mapping: Done!      ")
 
+            (unique, counts) = np.unique(y, return_counts=True)
+            frequencies = np.asarray((unique, counts)).T
+
+            print(frequencies)
+
         print("Train validation split...")
-        # Split the dataset in two equal parts
-        X_train, x_rest, y_train, y_rest= train_test_split(
-            X, y, train_size=min(X.shape[0], train_size), stratify=y, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=y, random_state=42)
 
         print("Train test split...")
-        X_test, X_val, y_test, y_val= train_test_split(
-            x_rest, y_rest, test_size=(int(train_size*test_size)), train_size=(int(train_size*test_size)), stratify=y_rest, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, stratify=y_train, test_size=0.25, random_state=1) # 0.25 x 0.8 = 0.2
 
         print("Cleaning and typing data...")
         # Prevents overflow on algoritms computations
@@ -364,13 +416,5 @@ def load(train_size, datafiles=None, normalize=False, map_classes=True, binary=F
         np.save(CACHE_FOLDER + "val_data.npy", X_val)
         np.save(CACHE_FOLDER + "val_labels.npy", y_val)
 
-    normalizer = None
-    if normalize:
-        print("Normalization: Loading...")
-        normalizer = preprocessing.Normalizer().fit(X_train)
-        X_train = normalizer.transform(X_train)
-        X_test = normalizer.transform(X_test)
-        X_val = normalizer.transform(X_test)
-        print("Done!")
 
     return X_train, y_train, X_test, y_test, X_val, y_val, normalizer

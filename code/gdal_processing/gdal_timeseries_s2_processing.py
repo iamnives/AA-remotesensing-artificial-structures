@@ -10,11 +10,11 @@ import gdal
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "arbitrary/"
+ROI = "vila-de-rei/"
 SRC = DATA_FOLDER + "clipped/" + ROI
 SRC_FOLDER = SRC + "ts/"
 
-DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "/tstats/"
+DST_FOLDER = DATA_FOLDER + "clipped/" + ROI + "tstats/"
 
 
 def main(argv):
@@ -35,8 +35,21 @@ def main(argv):
         "ndvi": [],
         "evi": [],
         "ndbi": [],
-        "ndwi": []
+        "savi": [],
+        "mndwi": [],
+        "ndwi": [],
+        "bsi": [],
+        "ui": [],
+        "idi": [],
+        "vibi": [],
+        "nbi": [],
+        "baei": [],
+        "bui": [],
+        "ndvire": [],
+        "ndti" : [],
     }
+
+
 
     src_dss = [f for f in os.listdir(SRC_FOLDER) if (
         ".jp2" in f) or (".tif" in f) or (".img" in f)]
@@ -47,7 +60,7 @@ def main(argv):
         try:
             bands[f.split("_")[3].split(".")[0]].append(SRC_FOLDER + f)
         except KeyError:
-            print("ignoring")
+            print("ignoring: ", f)
 
     refDs = gdal.Open("../sensing_data/clipped/" + ROI +
                       "ignored/static/clipped_sentinel2_B08.vrt", gdal.GA_ReadOnly)
@@ -71,32 +84,35 @@ def main(argv):
 
         # Using quartiles, change to 0.05 quantiles later if load isn't too much...
         mean_ts = np.mean(timeseries, axis=0)  # mean
+        nq_tiles = 5
+
         q0 = np.quantile(timeseries, 0.00, axis=0)  # minimum
-        q1 = np.quantile(timeseries, 0.25, axis=0)  # first quantile
-        q2 = np.quantile(timeseries, 0.50, axis=0)  # median
-        q3 = np.quantile(timeseries, 0.75, axis=0)  # third quantile
-        q4 = np.quantile(timeseries, 1.0, axis=0)  # maximum
+
+        n_tiles = [q0]
+
+        increment = 1/nq_tiles
+        q_tile = 0.00
+        for n in range(nq_tiles-1):
+            q_tile += increment
+            q = np.quantile(timeseries, q_tile, axis=0)
+            n_tiles.append(q)
+
         std = np.std(timeseries, axis=0)  # standard dev
         variance = np.sqrt(std)  # variance
 
-        d_type = gdal.GDT_UInt16
-        if "i" in band:
-            d_type = gdal.GDT_Float32
+        d_type = gdal.GDT_Float32
 
         viz.createGeotiff(DST_FOLDER + b + "_mean.tiff", mean_ts,
                           "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
-        viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
-        viz.createGeotiff(DST_FOLDER + b + "_q1.tiff", q1,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
-        viz.createGeotiff(DST_FOLDER + b + "_q2.tiff", q2,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
-        viz.createGeotiff(DST_FOLDER + b + "_q3.tiff", q3,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
-        viz.createGeotiff(DST_FOLDER + b + "_q4.tiff", q4,
-                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
         viz.createGeotiff(DST_FOLDER + b + "_var.tiff", variance,
                           "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
+        viz.createGeotiff(DST_FOLDER + b + "_q0.tiff", q0,
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
+
+        for idx, q in enumerate(n_tiles):
+            viz.createGeotiff(DST_FOLDER + b + f"_q{idx}.tiff", q,
+                          "../sensing_data/clipped/vila-de-rei/ignored/static/clipped_sentinel2_B08.vrt", d_type)
+        
 
 
 # np.mean(a, axis=0), np.quantile(a, 0.25, axis=0),

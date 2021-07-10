@@ -27,16 +27,13 @@ from sklearn.model_selection import train_test_split
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
-ROI = "vila-de-rei/"
+ROI = "bigsquare/"
 
 DS_FOLDER = DATA_FOLDER + "clipped/" + ROI
 OUT_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/xgb/boosted_20px_tstest_group1_classification.tiff"
+    "new_test.tiff"
 OUT_PROBA_RASTER = DATA_FOLDER + "results/" + ROI + \
-    "timeseries/xgb/boosted_20px_tstest_group1_classification"
-
-REF_FILE = DATA_FOLDER + "clipped/" + ROI + \
-    "ignored/static/clipped_sentinel2_B08.vrt"
+    "boosted_newfmz_test_classification"
 
 def str_2_bool(v):
     if isinstance(v, bool):
@@ -72,32 +69,28 @@ def main(argv):
     obj = 'binary:hinge'
 
     real_start = time.time()
-    
-    split_struct=False
-    osm_roads=False
 
-    train_size = int(19386625*0.2)
-    # train_size = int(1607*1015*0.2)
-    
-    X_train, y_train, X_test, y_test, _, _, _ = data.load(train_size, map_classes=False, normalize=False, osm_roads=osm_roads, split_struct=split_struct, gt_raster='cos_new_gt_2015t.tiff')
+    gt_raster = "cos_indi_ground_binary_gt.tiff"
+    out_ref_raster = DS_FOLDER + "cos_indi_ground_binary_big.tif"
+    X_train, y_train, X_test, y_test, _, _, norm = data.load(normalize=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, gt_raster=gt_raster) 
 
     start = time.time()
 
     #XGB_binary_building = {'colsample_bytree': 0.7343021353976351, 'gamma': 0, 'learning_rate': 0.16313076998849083, 'max_delta_step': 8.62355770678575, 'max_depth': 8, 'min_child_weight': 3, 'n_estimators': 1500, 'predictor': 'cpu_predictor', 'tree_method': 'hist'}
 
 
-    forest = xgb.XGBClassifier(colsample_bytree=0.7343021353976351,
+    forest = xgb.XGBClassifier(colsample_bytree=0.7806582714598144,
                             gamma=0,
                             gpu_id=0,
-                            learning_rate=0.16313076998849083,
-                            max_depth=8,
-                            min_child_weight=3,
-                            max_delta_step=8.62355770678575,
+                            learning_rate=0.1365824474680162,
+                            max_depth=6,
+                            min_child_weight=5,
+                            max_delta_step=4.613093902915149,
                             n_estimators=1500,
                             n_jobs=-1,
-                            #objective=obj,  # binary:hinge if binary classification
+                            objective=obj,  # binary:hinge if binary classification
                             predictor='cpu_predictor',
-                            tree_method='hist'
+                            tree_method='gpu_hist'
                             )
 
 
@@ -127,31 +120,38 @@ def main(argv):
     elapsed = end-start
     print("Training time: " + str(timedelta(seconds=elapsed)))
 
-
     yt_pred = forest.predict(X_train)
-
-    yt_pred[yt_pred > 0.5] = 1
-    yt_pred[yt_pred <= 0.5] = 0  
-
+    
     kappa = cohen_kappa_score(y_train, yt_pred)
     print(f'Train Kappa: {kappa}')
     print(classification_report(y_train, yt_pred))
 
     y_pred = forest.predict(X_test)
+    
+    if True:
+        print("Class Mapping: Loading...")
+        y_pred_binary = np.array([data._class_split_map_ua_binary(yi) for yi in tqdm(y_pred)])
+        y_true_binary = np.array([data._class_split_map_ua_binary(yi) for yi in tqdm(y_test)])
+        print("Class Mapping: Done!      ")
 
-    y_pred[y_pred > 0.5] = 1
-    y_pred[y_pred <= 0.5] = 0 
 
     kappa = cohen_kappa_score(y_test, y_pred)
     print(f'Validation Kappa: {kappa}')
     print(classification_report(y_test, y_pred))
 
-    dump(forest, '../sensing_data/models/boosted_test_group1.joblib')
+    print("Binary metrics.......................")
+    kappa = cohen_kappa_score(y_true_binary, y_pred_binary)
+    print(f'Validation Kappa: {kappa}')
+    print(classification_report(y_true_binary, y_pred_binary))
+
+    dump(forest, '../sensing_data/models/boosted_test_ua_cluster.joblib')
     print("Saved model to disk")
 
-    # Testing trash
-    X, y, shape = data.load_prediction(
-        ratio=1, map_classes=False, normalize=False, osm_roads=osm_roads, split_struct=split_struct, gt_raster='cos_new_gt_2015t.tif')
+    # Testing trash, useless gt:raster for no gt
+    predict_folder = "D:/AA-remotesensing-artificial-structures/sensing_data/clipped/fullsqure/clipped/"
+    predict_dfs = [predict_folder+'clipped_sentinel1_asc.tif',predict_folder+'clipped_sentinel1_desc.tif',predict_folder+'clipped_sentinel2_complete.tif']
+    #out_ref_raster = predict_folder+'clipped_sentinel1_asc.tif'
+    X, y, shape = data.load_prediction(datafiles=None, ratio=1, map_classes=False, binary=False, urban_atlas=False, znorm=False, normalize=False, osm_roads=False, split_struct=False, gt_raster=predict_folder+'cos_indi_ground_binary_big.tif')
 
     start_pred = time.time()
     # batch test
@@ -167,37 +167,42 @@ def main(argv):
     print("Predict 100%...")
 
     y_pred_classes = np.concatenate((y_pred, y_pred2))
-    y_pred_classes[y_pred_classes > 0.5] = 1
-    y_pred_classes[y_pred_classes <= 0.5] = 0 
 
     print("Predict time: " + str(timedelta(seconds=time.time()-start_pred)))
 
+    y_pred_classes_reshaped = y_pred_classes.reshape(shape)
+
+    viz.createGeotiff(OUT_RASTER, y_pred_classes_reshaped,out_ref_raster, gdal.GDT_Byte)
+    
     kappa = cohen_kappa_score(y, y_pred_classes)
     print(f'Kappa: {kappa}')
     print(classification_report(y, y_pred_classes))
 
-    y_pred_classes_reshaped = y_pred_classes.reshape(shape)
 
-    viz.createGeotiff(OUT_RASTER, y_pred_classes_reshaped,
-                      REF_FILE, gdal.GDT_Byte)
-
-    return 
-    
     print("Creating uncertainty matrix...")
     start_matrix = time.time()
+    create_proba = False
+    if create_proba:
+        print("Predict 0%...")
+        y_pred_proba = forest.predict_proba(X_h)
+        print("Predict 50%...")
+        y_pred2_proba = forest.predict_proba(X_h1)
+        print("Predict 100%...")
+        y_pred_proba = np.concatenate((y_pred_proba, y_pred2_proba))
 
-    y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 4))
+        y_pred_proba_reshaped = y_pred_proba.reshape((shape[0], shape[1], 5))
+        
+        viz.createGeotiff(OUT_PROBA_RASTER + "estrutura.tiff",
+                        y_pred_proba_reshaped[:, :, 0], out_ref_raster, gdal.GDT_Float32)
+        viz.createGeotiff(OUT_PROBA_RASTER + "rural.tiff",
+                        y_pred_proba_reshaped[:, :, 1], out_ref_raster, gdal.GDT_Float32)
+        viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
+                            y_pred_proba_reshaped[:, :, 2], out_ref_raster, gdal.GDT_Float32)
+        viz.createGeotiff(OUT_PROBA_RASTER + "natural.tiff",
+                        y_pred_proba_reshaped[:, :, 3], out_ref_raster, gdal.GDT_Float32)
+        viz.createGeotiff(OUT_PROBA_RASTER + "indi.tiff",
+                        y_pred_proba_reshaped[:, :, 4], out_ref_raster, gdal.GDT_Float32)
 
-    viz.createGeotiff(OUT_PROBA_RASTER + "estrutura_urbana.tiff",
-                      y_pred_proba_reshaped[:, :, 0], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "estrada.tiff",
-                    y_pred_proba_reshaped[:, :, 1], REF_FILE, gdal.GDT_Float32)
-    # viz.createGeotiff(OUT_PROBA_RASTER + "outras.tiff",
-    #                     y_pred_proba_reshaped[:, :, 2], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "natural.tiff",
-                      y_pred_proba_reshaped[:, :, 3], REF_FILE, gdal.GDT_Float32)
-    viz.createGeotiff(OUT_PROBA_RASTER + "agua.tiff",
-                      y_pred_proba_reshaped[:, :, 4], REF_FILE, gdal.GDT_Float32)
 
     end = time.time()
     elapsed = end-start_matrix

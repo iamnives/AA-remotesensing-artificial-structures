@@ -4,15 +4,15 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import osr
+from pathlib import Path
 
 #inicialize data location
-DATA_FOLDER = "../sensing_data/"
-SRC_FOLDER = DATA_FOLDER + "datasets/s2/"
+DATA_FOLDER = "E:\sat_data\s2-2018-nocloud"
+SRC_FOLDER = DATA_FOLDER + "\data"
+OUT_FOLDER = DATA_FOLDER + "\\vrt"
 
 bands =	{
-  "AOT":[],
-  "SCL": [],
-  "WVP": [],
+  "TCI":[],
   "B01": [],
   "B02": [],
   "B03": [],
@@ -23,20 +23,21 @@ bands =	{
   "B08": [],
   "B8A": [],
   "B09": [],
+  "B10": [],
   "B11": [],
   "B12": [],
+  "PVI": [],
 }
 
 def main(argv):
-    # Reference files
-    for f in os.listdir(SRC_FOLDER):
-      if 'img' in f:
-        bands[f.split("_")[3]].append(SRC_FOLDER + f)
 
-    vrt_options = gdal.BuildVRTOptions(resolution='lowest')
+    for path in Path(SRC_FOLDER).rglob('*.jp2'):
+      str_path = str(path)
+      bands[str_path.split('_')[-1].split('.')[0]].append(str_path)
+    vrt_options = gdal.BuildVRTOptions(resolution='highest')
     for b in bands:
         if(len(bands[b])> 0):
-          gdal.BuildVRT(SRC_FOLDER + 'sentinel2_' + b + '.vrt', bands[b], options=vrt_options)
+          gdal.BuildVRT(OUT_FOLDER + '\sentinel2_' + b + '.vrt', bands[b], options=vrt_options)
     
 if __name__== "__main__":
   main(sys.argv)

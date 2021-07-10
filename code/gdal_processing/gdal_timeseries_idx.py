@@ -7,26 +7,99 @@ import numpy as np
 import gdal
 
 # inicialize data location
-ROI = "arbitrary/"
+ROI = "vila-de-rei/"
 SRC_FOLDER = "../sensing_data/" + "clipped/" + ROI + "ts/"
 DST_FOLDER = "../sensing_data/" + "clipped/" + ROI + "ts/"
 
 
-def ndvi(nir, red, ref):
+def ndti_calc(swir1, swir2):
+    return (swir1 - swir2)/(swir1 + swir2)
+
+def ndvire_calc(rededge1, red):
+    return (rededge1 - red)/(rededge1 + red)
+
+def savi_calc(nir, red):
+    return (nir - red)/((nir + red + 0.5) * 0.5)
+
+def mndwi_calc(green, swir1):
+    return (green - swir1)/(green + swir1)
+
+def ndvi_calc(nir, red):
+    """
+    Normalized
+    difference
+    vegetation index
+    """
     return (nir - red) / (nir + red + 1)
 
-
-def ndbi(swir, nir, ref):
+def ndbi_calc(swir, nir):
+    """
+    Normalized
+    difference
+    built-up index
+    """
     return (swir - nir) / (swir + nir + 1)
 
-
-def ndwi(green, nir, ref):
+def ndwi_calc(green, nir):
+    """
+    Normalized
+    difference
+    water index
+    """
     return (green - nir) / (green + nir + 1)
 
-
-def evi(nir, red, ref, blue=None):
+def evi_calc(nir, red, blue=None):
+    """
+    """
     return 2.4*(nir - red) / (nir + 2.4*red + 10_000)
 
+def bui_calc(ndbi, ndvi):
+    """
+    Buil-up index
+    """
+    return ndbi-ndvi
+
+def baei_calc(red, green, swir, L=0.3):
+    """
+    Built-up area
+    extraction
+    index
+    """
+    return (red + L)/(green + swir)
+
+def nbi_calci(red, nir, swir):
+    """
+    new build-up index
+    """
+    return (swir * red)/nir
+
+def vibi_calc(ndvi, ndbi):
+    """
+    Vegetation
+    index built-up
+    index
+    """
+    return ndvi/(ndvi + ndbi)
+
+def ibi_calc(ndbi, savi, mndwi):
+    """
+    Index-based
+    built-up index 
+    """
+    return (ndbi - ((savi+mndwi)/2)) / (ndbi + ((savi+mndwi)/2))
+
+def ui_calc(swir, nir):
+    """
+    Urban index
+    wrong formula in paper
+    """
+    return ( ((swir - nir)/(swir - nir)) + 1.0 )*100
+
+def bsi_calc(swir, red, nir, blue):
+    """
+    Bare soil index
+    """
+    return ((swir + red)-(nir + blue))/((swir + red)+(nir + blue))
 
 def getBand(f):
     refDs = gdal.Open(SRC_FOLDER + f, gdal.GA_ReadOnly)
@@ -48,26 +121,34 @@ def main(argv):
         nir = getBand(data[7])
         green = getBand(data[2])
         red = getBand(data[3])
-        swir = getBand(data[10])
+        blue = getBand(data[1])
+        swir1 = getBand(data[10])
+        swir2 = getBand(data[11])
+        rededge1 = getBand(data[4])
 
-        id1 = ndvi(nir, red, ref)
-        id2 = ndwi(green, nir, ref)
-        id3 = ndbi(swir, nir, ref)
-        id4 = evi(nir, red, ref)
+        ndvi = ndvi_calc(nir, red)
+        ndwi = ndwi_calc(green, nir)
+        ndbi = ndbi_calc(swir1, nir)
+        evi = evi_calc(nir, red)
+        savi = savi_calc(nir, red)
+        mndwi = mndwi_calc(green, swir1) 
+        bsi = bsi_calc(swir1, red, nir, blue)
+        ui = ui_calc(swir1, nir)
+        idi = ibi_calc(ndbi, savi, mndwi)
+        vibi = vibi_calc(ndvi, ndbi)
+        nbi = nbi_calci(red, nir, swir1)
+        baei = baei_calc(red, green, swir1, L=0.3)
+        bui = bui_calc(ndbi, ndvi)
+        ndti = ndti_calc(swir1, swir2)
+        ndvire = ndvire_calc(rededge1, red)
+        
+        idxs = [(ndvi, 'ndvi'),(ndwi,'ndwi'), (ndbi,'ndbi'),(evi,'evi'),(savi,'savi'),(mndwi,'mndwi'),(bsi,'bsi'),(ui,'ui'),(idi,'idi'),(vibi,'vibi'),(nbi,'nbi'),(baei,'baei'),(bui,'bui'),(ndti,'ndti'),(ndvire,'ndvire')]
 
-        id1[~np.isfinite(id1)] = 0
-        id2[~np.isfinite(id2)] = 0
-        id3[~np.isfinite(id3)] = 0
-        id4[~np.isfinite(id4)] = 0
+        for idx, name in idxs:
+            idx[~np.isfinite(idx)] = 0
 
-        createGeotiff(SRC_FOLDER + f_id +
-                      "clipped_pad_pad_ndvi.tif", id1, ref, gdal.GDT_Float32)
-        createGeotiff(SRC_FOLDER + f_id +
-                      "clipped_pad_pad_ndwi.tif", id2, ref, gdal.GDT_Float32)
-        createGeotiff(SRC_FOLDER + f_id +
-                      "clipped_pad_pad_ndbi.tif", id3, ref, gdal.GDT_Float32)
-        createGeotiff(SRC_FOLDER + f_id + "clipped_pad_pad_evi.tif",
-                      id4, ref, gdal.GDT_Float32)
+            createGeotiff(SRC_FOLDER + f_id +
+                        f"clipped_pad_pad_{name}.tif", idx, ref, gdal.GDT_Float32)
 
 
 if __name__ == "__main__":
