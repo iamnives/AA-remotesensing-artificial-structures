@@ -122,7 +122,7 @@ tqdm==4.45.0
 traitlets @ file:///tmp/build/80754af9/traitlets_1600712679583/work
 typed-ast==1.4.1
 typing-extensions==3.7.4.2
-urllib3==1.25.9
+urllib3==1.26.5
 wcwidth @ file:///tmp/build/80754af9/wcwidth_1593447189090/work
 webencodings==0.5.1
 Werkzeug==1.0.1
