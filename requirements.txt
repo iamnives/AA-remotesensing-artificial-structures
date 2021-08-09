@@ -95,7 +95,7 @@ pyrsistent @ file:///C:/ci/pyrsistent_1600123688363/work
 pytest==5.4.1
 python-dateutil==2.8.1
 pytz==2020.1
-pywin32==227
+pywin32==301
 pywinpty==0.5.7
 pyzmq==19.0.2
 requests==2.23.0
