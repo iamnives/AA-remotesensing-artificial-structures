@@ -9,15 +9,18 @@ import sys
 
 import gdal
 import numpy as np
+import pandas as pd
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
 import matplotlib.pyplot as plt
-from imblearn.under_sampling import RandomUnderSampler, TomekLinks
+from imblearn.under_sampling import RandomUnderSampler, TomekLinks, ClusterCentroids, EditedNearestNeighbours, RepeatedEditedNearestNeighbours, AllKNN, CondensedNearestNeighbour, OneSidedSelection, NeighbourhoodCleaningRule, InstanceHardnessThreshold, NearMiss
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.combine import SMOTETomek
 from imblearn.ensemble import RUSBoostClassifier
 from scipy import stats
 import scipy.signal
+from collections import Counter
 
 from tqdm import tqdm
 
@@ -263,7 +266,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, gt_raster="cos_ground.tif"):
+def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, indexes=True, gt_raster="cos_ground.tif"):
 
     try:
         print("Trying to load cached data...")
@@ -309,14 +312,21 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
         (unique, counts) = np.unique(gt_bands, return_counts=True)
         frequencies = np.asarray((unique, counts)).T
 
+        print("Pre zero frequencies")
         print(frequencies)
 
         is_train = np.nonzero(ref_bands)
+        print("Pixels: ", gt_bands.size)
+
         y = gt_bands[is_train].flatten()
+        
+        (unique, counts) = np.unique( y, return_counts=True)
+        frequencies = np.asarray((unique, counts)).T
+
+        print("Real frequencies")
+        print(frequencies) 
 
         # Prepare training data (set of pixels used for training) and labels
-        # is_train = np.nonzero(cos_bands)
-
         # Create empty HxW array/matrix
         # X = np.empty((len(src_dss), len(cos_bands[is_train])))
         X = []
@@ -352,6 +362,11 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
 
         print("Datasets: Done!           ")
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
+        
+        # resample dataset to wanted distributioms
+        us = EditedNearestNeighbours()
+        X, y = us.fit_resample(X, y)
+        print(sorted(Counter(y).items()))
 
         maping_f = _class_map
 
@@ -390,11 +405,34 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
 
             print(frequencies)
 
-        print("Train validation split...")
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=y, random_state=42)
+        if not indexes: # switch to if indexes exist use indexes.
+            indices = np.arange(X.shape[0])
+            print("Train validation split...")
+            X_train, X_test, y_train, y_test, idx1, idx2 = train_test_split(X, y, indices, test_size=test_size, stratify=y, random_state=42)
 
-        print("Train test split...")
-        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, stratify=y_train, test_size=0.25, random_state=1) # 0.25 x 0.8 = 0.2
+            np.save(CACHE_FOLDER + "main_indexes_1.npy", idx1)
+            np.save(CACHE_FOLDER + "main_indexes_2.npy", idx2)
+            indices = np.arange(X_train.shape[0])
+            print("Train test split...")
+            X_train, X_val, y_train, y_val, idx1, idx2 = train_test_split(X_train, y_train, indices, stratify=y_train, test_size=0.25, random_state=42) # 0.25 x 0.8 = 0.2
+            np.save(CACHE_FOLDER + "train_indexes_1.npy", idx1)
+            np.save(CACHE_FOLDER + "train_indexes_2.npy", idx2)
+        else:
+            print("Trying to load cached indexes data...")
+            idx1 = np.load(CACHE_FOLDER + "main_indexes_1.npy")
+            idx2 = np.load(CACHE_FOLDER + "main_indexes_2.npy")
+            X_train = X[idx1]
+            y_train = y[idx1]
+            X_test = X[idx2]
+            y_test = y[idx2]
+
+            idx1 = np.load(CACHE_FOLDER + "train_indexes_1.npy")
+            idx2 = np.load(CACHE_FOLDER + "train_indexes_2.npy")
+            X_val = X_train[idx2]
+            y_val = y_train[idx2]
+            X_train = X_train[idx1]
+            y_train = y_train[idx1]
+            
 
         print("Cleaning and typing data...")
         # Prevents overflow on algoritms computations
@@ -407,6 +445,7 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
         X_val[~np.isfinite(X_val)] = -1
 
         print("Saving data to file cache...")
+
         np.save(CACHE_FOLDER + "train_data.npy", X_train)
         np.save(CACHE_FOLDER + "train_labels.npy", y_train)
 
@@ -416,5 +455,5 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
         np.save(CACHE_FOLDER + "val_data.npy", X_val)
         np.save(CACHE_FOLDER + "val_labels.npy", y_val)
 
-
+        return
     return X_train, y_train, X_test, y_test, X_val, y_val, normalizer

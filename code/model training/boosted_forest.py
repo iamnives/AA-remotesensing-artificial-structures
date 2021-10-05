@@ -6,6 +6,8 @@ Created on Sun Mar  3 21:42:16 2019
 
 import os
 import sys
+
+from scipy.stats.stats import obrientransform
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import argparse
 from tqdm import tqdm
@@ -16,14 +18,15 @@ from datetime import timedelta
 import time
 from utils import visualization as viz
 from utils import data
+from utils import metrics
 import gdal
-from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
-from xgboost import plot_importance
 from joblib import dump, load
 import xgboost as xgb
 import matplotlib.pyplot as plt
 from feature_selection import fselector
 from sklearn.model_selection import train_test_split
+from utils.classaccuracymetrics import cls_quantity_accuracy, calc_class_accuracy_metrics
+import pprint as pp
 
 # inicialize data location
 DATA_FOLDER = "../sensing_data/"
@@ -72,7 +75,7 @@ def main(argv):
 
     gt_raster = "cos_indi_ground_binary_gt.tiff"
     out_ref_raster = DS_FOLDER + "cos_indi_ground_binary_big.tif"
-    X_train, y_train, X_test, y_test, _, _, norm = data.load(normalize=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, gt_raster=gt_raster) 
+    X_train, y_train, X_test, y_test, _, _, norm = data.load(normalize=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, indexes=False, gt_raster=gt_raster) 
 
     start = time.time()
 
@@ -122,31 +125,36 @@ def main(argv):
 
     yt_pred = forest.predict(X_train)
     
-    kappa = cohen_kappa_score(y_train, yt_pred)
-    print(f'Train Kappa: {kappa}')
-    print(classification_report(y_train, yt_pred))
+    metrics.scores(y_train, yt_pred)
 
     y_pred = forest.predict(X_test)
-    
-    if True:
+
+    y_pred = y_pred - 1
+    y_test = y_test - 1
+
+    non_zero = np.count_nonzero(y_pred)
+
+    #binary only
+    acc_hist = [len(y_pred) - non_zero, non_zero]
+    cls_area = np.array(acc_hist)
+    print(cls_area)
+
+    acc_metrics = calc_class_accuracy_metrics(y_test, y_pred, cls_area=cls_area, cls_names=['(0) non built-up', '(1) built-up'])
+
+    metrics.scores(y_test, y_pred)
+    pp.pprint(acc_metrics)
+
+    if False:
         print("Class Mapping: Loading...")
         y_pred_binary = np.array([data._class_split_map_ua_binary(yi) for yi in tqdm(y_pred)])
         y_true_binary = np.array([data._class_split_map_ua_binary(yi) for yi in tqdm(y_test)])
         print("Class Mapping: Done!      ")
-
-
-    kappa = cohen_kappa_score(y_test, y_pred)
-    print(f'Validation Kappa: {kappa}')
-    print(classification_report(y_test, y_pred))
-
-    print("Binary metrics.......................")
-    kappa = cohen_kappa_score(y_true_binary, y_pred_binary)
-    print(f'Validation Kappa: {kappa}')
-    print(classification_report(y_true_binary, y_pred_binary))
+        print("Binary metrics.......................")
+        metrics.scores(y_true_binary, y_pred_binary)
 
     dump(forest, '../sensing_data/models/boosted_test_ua_cluster.joblib')
     print("Saved model to disk")
-
+    return 
     # Testing trash, useless gt:raster for no gt
     predict_folder = "D:/AA-remotesensing-artificial-structures/sensing_data/clipped/fullsqure/clipped/"
     predict_dfs = [predict_folder+'clipped_sentinel1_asc.tif',predict_folder+'clipped_sentinel1_desc.tif',predict_folder+'clipped_sentinel2_complete.tif']
@@ -173,11 +181,12 @@ def main(argv):
     y_pred_classes_reshaped = y_pred_classes.reshape(shape)
 
     viz.createGeotiff(OUT_RASTER, y_pred_classes_reshaped,out_ref_raster, gdal.GDT_Byte)
-    
-    kappa = cohen_kappa_score(y, y_pred_classes)
-    print(f'Kappa: {kappa}')
-    print(classification_report(y, y_pred_classes))
 
+    non_zero_idx = np.nonzero(y)
+    y_pred_classes_clean = y_pred_classes[non_zero_idx]
+    y_clean = y[non_zero_idx]
+
+    metrics.scores(y_clean, y_pred_classes_clean)
 
     print("Creating uncertainty matrix...")
     start_matrix = time.time()

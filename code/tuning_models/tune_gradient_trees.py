@@ -9,7 +9,7 @@ from utils import metrics
 from utils import data
 from utils import visualization as viz
 from scipy.stats import uniform
-from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import cohen_kappa_score, matthews_corrcoef
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
@@ -52,7 +52,8 @@ def model(dfs):
                   }
 
     kappa_scorer = make_scorer(cohen_kappa_score)
-    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer}, refit='kappa', return_train_score=False, n_iter=20, verbose=10, n_jobs=1)
+    mcc_scorer = make_scorer(matthews_corrcoef)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer, 'mcc': mcc_scorer}, refit='mcc', return_train_score=False, n_iter=20, verbose=10, n_jobs=1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")
@@ -65,11 +66,7 @@ def model(dfs):
     clf = gs.best_estimator_
     y_pred = clf.predict(X_test)
 
-    kappa = cohen_kappa_score(y_test, y_pred)
-    matrix = confusion_matrix(y_test, y_pred)
-    print(f'Kappa: {kappa}')
-    print(classification_report(y_test, y_pred))
-    print(matrix)
+    metrics.scores(y_test, y_pred)
 
     end = time.time()
     elapsed = end-start
