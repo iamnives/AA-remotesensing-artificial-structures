@@ -266,7 +266,7 @@ def load_timeseries(img_size):
         image_stack[:, :, i] = label_bands  # Set the i:th slice to this image
     return image_files
 
-def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, indexes=True, gt_raster="cos_ground.tif"):
+def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, indexes=False, gt_raster="cos_ground.tif"):
 
     try:
         print("Trying to load cached data...")
@@ -364,9 +364,9 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
         print("Datasets: Features array shape, should be (n,k): " + str(X.shape))
         
         # resample dataset to wanted distributioms
-        us = EditedNearestNeighbours()
-        X, y = us.fit_resample(X, y)
-        print(sorted(Counter(y).items()))
+        #us = EditedNearestNeighbours()
+        #X, y = us.fit_resample(X, y)
+        print("after processing: ", sorted(Counter(y).items()))
 
         maping_f = _class_map
 
@@ -444,6 +444,19 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
         X_test[~np.isfinite(X_test)] = -1
         X_val[~np.isfinite(X_val)] = -1
 
+        (unique, counts) = np.unique(y_train, return_counts=True)
+        frequencies = np.asarray((unique, counts)).T
+
+        print("Train frequencies")
+        print(frequencies) 
+
+        (unique, counts) = np.unique(y_test, return_counts=True)
+        frequencies = np.asarray((unique, counts)).T
+
+        print("Test frequencies")
+        print(frequencies) 
+
+
         print("Saving data to file cache...")
 
         np.save(CACHE_FOLDER + "train_data.npy", X_train)
@@ -455,5 +468,4 @@ def load(datafiles=None, normalize=False, znorm=False, map_classes=False, binary
         np.save(CACHE_FOLDER + "val_data.npy", X_val)
         np.save(CACHE_FOLDER + "val_labels.npy", y_val)
 
-        return
     return X_train, y_train, X_test, y_test, X_val, y_val, normalizer

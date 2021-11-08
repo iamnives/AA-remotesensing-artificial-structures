@@ -73,7 +73,7 @@ def main(argv):
 
     real_start = time.time()
 
-    gt_raster = "cos_indi_ground_binary_gt.tiff"
+    gt_raster = "cos_indi_ground_binary.tiff"
     out_ref_raster = DS_FOLDER + "cos_indi_ground_binary_big.tif"
     X_train, y_train, X_test, y_test, _, _, norm = data.load(normalize=False, map_classes=False, binary=False, test_size=0.2, osm_roads=False, army_gt=False, urban_atlas=False, split_struct=False, indexes=False, gt_raster=gt_raster) 
 

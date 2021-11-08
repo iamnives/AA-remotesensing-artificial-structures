@@ -53,7 +53,7 @@ def model(dfs):
 
     kappa_scorer = make_scorer(cohen_kappa_score)
     mcc_scorer = make_scorer(matthews_corrcoef)
-    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer, 'mcc': mcc_scorer}, refit='mcc', return_train_score=False, n_iter=20, verbose=10, n_jobs=1)
+    gs = RandomizedSearchCV(xgb_model, parameters, cv=3, scoring={'kappa': kappa_scorer, 'mcc': mcc_scorer}, refit='kappa', return_train_score=False, n_iter=20, verbose=10, n_jobs=1)
     gs.fit(X_train, y_train)
 
     print("Best parameters set found on development set: ")
