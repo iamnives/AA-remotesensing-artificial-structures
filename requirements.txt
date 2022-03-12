@@ -74,7 +74,7 @@ pandas==1.0.5
 pandocfilters==1.4.2
 parso==0.7.0
 pickleshare @ file:///C:/ci/pickleshare_1594374056827/work
-Pillow==7.1.2
+Pillow==9.0.1
 pip-api==0.0.14
 pipreqs==0.4.10
 pluggy==0.13.1
