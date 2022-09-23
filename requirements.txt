@@ -81,7 +81,7 @@ pluggy==0.13.1
 prometheus-client==0.8.0
 promise==2.3
 prompt-toolkit @ file:///tmp/build/80754af9/prompt-toolkit_1598885458782/work
-protobuf==3.11.3
+protobuf==3.18.3
 py==1.8.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
