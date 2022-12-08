@@ -10,7 +10,7 @@ backcall==0.2.0
 bleach @ file:///tmp/build/80754af9/bleach_1600439572647/work
 Boruta==0.3
 cachetools==4.1.0
-certifi==2020.6.20
+certifi==2022.12.7
 cffi @ file:///C:/ci/cffi_1600699250966/work
 chardet==3.0.4
 colorama==0.4.3
